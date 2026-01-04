@@ -1,0 +1,36 @@
+name: linux
+
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+    tags:
+      - V**
+
+jobs:
+  ubuntu-2204:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.1'
+          modules: 'qtserialport qtmultimedia'
+          aqtversion: '==3.1.20'
+
+      - name: Install prerequisites
+        run: |
+          sudo apt update
+          sudo apt install -y cmake build-essential
+      
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake ..
+          make -j8
