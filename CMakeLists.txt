@@ -1,6 +1,13 @@
 cmake_minimum_required(VERSION 3.8)
 project(qshell)
 
+message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
+
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(QT_DIR "D:/software/qt6/6.10.1/msvc2022_64")
+    set(CMAKE_PREFIX_PATH ${QT_DIR} CACHE PATH "")
+endif ()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
