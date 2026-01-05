@@ -2,7 +2,7 @@ name: linux
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
     paths-ignore:
       - 'docs/**'
       - 'README.md'
@@ -27,7 +27,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt update
-          sudo apt install -y cmake build-essential
+          sudo apt install -y cmake build-essential clang-tidy
       
       - name: Build
         run: |
