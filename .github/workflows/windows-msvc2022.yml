@@ -21,17 +21,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 安装 CMake + Ninja（跨平台省事）
-      - name: Setup CMake & Ninja
-        uses: lukka/get-cmake@latest
-
-      # 安装 Qt6（MSVC2022 x64）
-      - name: Install Qt6
-        uses: jurplel/install-qt-action@v4
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
         with:
-          version: "6.6.*"
-          arch: "win64_msvc2022_64"
-          cache: true
+          arch: 'win64_msvc2019_64'
+          version: '6.5.3'
+          modules: 'qtmultimedia'
+          aqtversion: '==3.1.7'
+
+      - name: Install cmake
+        uses: crazy-max/ghaction-chocolatey@v3
+        with:
+          args: install cmake --no-progress
+
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          toolset: 14.29
 
       # 根据 vcpkg.json 安装依赖（并自动走 vcpkg 二进制缓存）
       - name: Setup vcpkg and install deps
