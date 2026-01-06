@@ -13,7 +13,7 @@ target_link_libraries(qshell
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-    find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${QT_DIR}/bin")
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "$ENV{Qt6_DIR}/bin")
     # 编译后执行 windeployqt
     add_custom_command(TARGET qshell POST_BUILD
             COMMAND "${WINDEPLOYQT_EXECUTABLE}"

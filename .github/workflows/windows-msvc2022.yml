@@ -1,0 +1,50 @@
+name: windows-msvc2022
+
+on:
+  push:
+    branches: [ master ]
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+    tags:
+      - V**
+
+jobs:
+  build:
+    runs-on: windows-2022
+
+    env:
+      VCPKG_TARGET_TRIPLET: x64-windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 安装 CMake + Ninja（跨平台省事）
+      - name: Setup CMake & Ninja
+        uses: lukka/get-cmake@latest
+
+      # 安装 Qt6（MSVC2022 x64）
+      - name: Install Qt6
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.6.*"
+          arch: "win64_msvc2022_64"
+          cache: true
+
+      # 根据 vcpkg.json 安装依赖（并自动走 vcpkg 二进制缓存）
+      - name: Setup vcpkg and install deps
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          runVcpkgInstall: true
+          vcpkgJsonGlob: "vcpkg.json"
+
+      - name: Build
+        shell: pwsh
+        run: >
+          $env:Vcpkg_DIR=${{ github.workspace }}/vcpkg
+          mkdir build
+          cmake ..
+          cmake --build .

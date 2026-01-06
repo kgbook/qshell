@@ -2,10 +2,13 @@ cmake_minimum_required(VERSION 3.8)
 project(qshell)
 
 message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
+message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-    set(QT_DIR "D:/software/qt6/6.10.1/msvc2022_64")
-    set(CMAKE_PREFIX_PATH ${QT_DIR} CACHE PATH "")
+    message(STATUS "Qt6_DIR=$ENV{Qt6_DIR}")
+    message(STATUS "Vcpkg_DIR=$ENV{Vcpkg_DIR}")
+    set(CMAKE_PREFIX_PATH $ENV{Qt6_DIR} CACHE PATH "")
+    set(CMAKE_TOOLCHAIN_FILE "$ENV{Vcpkg_DIR}/scripts/buildsystems/vcpkg.cmake" CACHE PATH "")
 endif ()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -28,9 +31,6 @@ if(QSLOG_CLANG_TIDY_ENABLE AND ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
     set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
     message(STATUS "enabled clang-tidy")
 endif()
-
-message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-message("CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
 
 add_subdirectory(third_party)
 add_subdirectory(src)
