@@ -46,18 +46,8 @@ add_library(qtermwidget
 )
 
 target_link_libraries(qtermwidget PUBLIC
-        Qt6::Core Qt6::Widgets Qt6::Network
+        Qt6::Core Qt6::Widgets Qt6::Network utf8proc
 )
-
-find_package(utf8proc QUIET CONFIG)
-
-if (utf8proc_FOUND)
-    target_link_libraries(qtermwidget PRIVATE utf8proc::utf8proc)
-else()
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(UTF8PROC REQUIRED IMPORTED_TARGET libutf8proc)
-    target_link_libraries(qtermwidget PRIVATE PkgConfig::UTF8PROC)
-endif()
 
 set(EXPORT_HEADERS util ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(qtermwidget PUBLIC ${EXPORT_HEADERS})

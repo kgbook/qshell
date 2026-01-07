@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.12)
 project(qshell)
 
 message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
@@ -6,11 +6,8 @@ message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     message(STATUS "Qt6_DIR=$ENV{Qt6_DIR}")
-    message(STATUS "Vcpkg_DIR=$ENV{Vcpkg_DIR}")
-    message(STATUS "CMAKE_PREFIX_PATH={CMAKE_PREFIX_PATH}")
     list(PREPEND CMAKE_PREFIX_PATH "$ENV{Qt6_DIR}")
-    message(STATUS "CMAKE_PREFIX_PATH={CMAKE_PREFIX_PATH}")
-    set(CMAKE_TOOLCHAIN_FILE "$ENV{Vcpkg_DIR}/scripts/buildsystems/vcpkg.cmake" CACHE PATH "")
+    message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
 endif ()
 
 set(CMAKE_CXX_STANDARD 17)
