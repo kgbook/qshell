@@ -50,7 +50,6 @@ jobs:
       - name: Build
         shell: pwsh
         run: |
-          $env:Vcpkg_DIR=${{ github.workspace }}/vcpkg
-          mkdir build
-          cmake ..
-          cmake --build .
+          $env:Vcpkg_DIR = "${{ github.workspace }}/vcpkg"
+          cmake -B build -S .
+          cmake --build build --config Release
