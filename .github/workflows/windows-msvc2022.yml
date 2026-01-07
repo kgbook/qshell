@@ -34,6 +34,9 @@ jobs:
         with:
           args: install cmake --no-progress
 
+      - name: Install pkg-config
+        run: choco install pkgconfiglite -y
+
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
         with:
