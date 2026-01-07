@@ -40,17 +40,16 @@ jobs:
           arch: x64
           toolset: 14.29
 
-      # 根据 vcpkg.json 安装依赖（并自动走 vcpkg 二进制缓存）
       - name: Setup vcpkg and install deps
         uses: lukka/run-vcpkg@v11
         with:
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: '84bab45d415d22042bd0b9081aea57f362da3f35'
           runVcpkgInstall: true
           vcpkgJsonGlob: "vcpkg.json"
 
       - name: Build
         shell: pwsh
-        run: >
+        run: |
           $env:Vcpkg_DIR=${{ github.workspace }}/vcpkg
           mkdir build
           cmake ..
