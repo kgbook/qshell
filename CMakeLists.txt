@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(qshell)
+project(qshell LANGUAGES CXX C)
 
 message("CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")

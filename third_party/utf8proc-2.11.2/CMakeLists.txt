@@ -41,7 +41,7 @@ target_compile_definitions(utf8proc PRIVATE "UTF8PROC_EXPORTS")
 if (NOT MSVC)
   set_target_properties(
     utf8proc PROPERTIES
-    COMPILE_FLAGS "-O2 -std=c99 -pedantic -Wall"
+    COMPILE_FLAGS "-O2 -pedantic -Wall"
   )
 endif ()
 
