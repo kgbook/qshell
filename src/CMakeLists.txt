@@ -10,6 +10,7 @@ target_link_libraries(qshell
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        qtermwidget
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")

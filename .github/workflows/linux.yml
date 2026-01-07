@@ -27,7 +27,7 @@ jobs:
       - name: Install prerequisites
         run: |
           sudo apt update
-          sudo apt install -y cmake build-essential clang-tidy
+          sudo apt install -y cmake build-essential clang-tidy libutf8proc-dev
       
       - name: Build
         run: |

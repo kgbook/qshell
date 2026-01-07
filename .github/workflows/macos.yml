@@ -27,9 +27,7 @@ jobs:
       - name: Install prerequisites
         run: |
           ruby - e  "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null  2 > /dev/null
-          brew install --build-from-source cmake
-          brew install create-dmg
-          brew install coreutils
+          brew install create-dmg utf8proc coreutils cmake pkg-config
 
       - name: Build
         run: |

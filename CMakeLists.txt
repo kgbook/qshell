@@ -20,6 +20,7 @@ find_package(Qt6 COMPONENTS
         Core
         Gui
         Widgets
+        Network
         REQUIRED)
 
 option(QSLOG_BUILD_TESTS "build tests" ON)
