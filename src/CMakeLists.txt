@@ -1,6 +1,8 @@
 add_executable(qshell main.cpp
         resources/resources.qrc
         ui/MainWindow.cpp
+        core/CryptoHelper.cpp
+        core/ConfigManager.cpp
         ui/session/SessionTabWidget.cpp
         ui/session/SessionTreeWidget.cpp
         ui/button_toolbar/CommandButtonBar.cpp

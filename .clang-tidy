@@ -167,5 +167,3 @@ CheckOptions:
     value: _
   - key:   readability-identifier-naming.ProtectedMemberSuffix
     value: _
-  - key:   readability-identifier-naming.PublicMemberSuffix
-    value: _
