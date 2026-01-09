@@ -5,6 +5,7 @@
 #include <QUuid>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <algorithm>
 
 // 协议类型
 enum class ProtocolType {
@@ -127,6 +128,7 @@ struct SessionData {
     SerialConfig serialConfig;
     bool enableLog = false;
     QString logPath;
+    int sortOrder = 0;  // 排序顺序
 
     SessionData() {
         id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -138,10 +140,14 @@ struct SessionData {
         obj["name"] = name;
         obj["groupId"] = groupId;
         obj["protocolType"] = static_cast<int>(protocolType);
-        obj["sshConfig"] = sshConfig.toJson();
-        obj["serialConfig"] = serialConfig.toJson();
+        if (protocolType == ProtocolType::SSH) {
+            obj["sshConfig"] = sshConfig.toJson();
+        } else if (protocolType == ProtocolType::Serial) {
+            obj["serialConfig"] = serialConfig.toJson();
+        }
         obj["enableLog"] = enableLog;
         obj["logPath"] = logPath;
+        obj["sortOrder"] = sortOrder;
         return obj;
     }
 
@@ -151,11 +157,20 @@ struct SessionData {
         data.name = obj["name"].toString();
         data.groupId = obj["groupId"].toString();
         data.protocolType = static_cast<ProtocolType>(obj["protocolType"].toInt());
-        data.sshConfig = SSHConfig::fromJson(obj["sshConfig"].toObject());
-        data.serialConfig = SerialConfig::fromJson(obj["serialConfig"].toObject());
+        if (data.protocolType == ProtocolType::SSH) {
+            data.sshConfig = SSHConfig::fromJson(obj["sshConfig"].toObject());
+        } else if (data.protocolType == ProtocolType::Serial) {
+            data.serialConfig = SerialConfig::fromJson(obj["serialConfig"].toObject());
+        }
         data.enableLog = obj["enableLog"].toBool();
         data.logPath = obj["logPath"].toString();
+        data.sortOrder = obj["sortOrder"].toInt(0);
         return data;
+    }
+
+    // 排序比较运算符
+    bool operator<(const SessionData& other) const {
+        return sortOrder < other.sortOrder;
     }
 };
 
@@ -163,6 +178,7 @@ struct SessionData {
 struct GroupData {
     QString id;
     QString name;
+    int sortOrder = 0;  // 排序顺序
 
     GroupData() {
         id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -172,6 +188,7 @@ struct GroupData {
         QJsonObject obj;
         obj["id"] = id;
         obj["name"] = name;
+        obj["sortOrder"] = sortOrder;
         return obj;
     }
 
@@ -179,7 +196,13 @@ struct GroupData {
         GroupData data;
         data.id = obj["id"].toString();
         data.name = obj["name"].toString();
+        data.sortOrder = obj["sortOrder"].toInt(0);
         return data;
+    }
+
+    // 排序比较运算符
+    bool operator<(const GroupData& other) const {
+        return sortOrder < other.sortOrder;
     }
 };
 
@@ -189,6 +212,7 @@ struct QuickButton {
     QString name;
     QString command;
     QString groupId;
+    int sortOrder = 0;  // 排序顺序
 
     QuickButton() {
         id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -200,6 +224,7 @@ struct QuickButton {
         obj["name"] = name;
         obj["command"] = command;
         obj["groupId"] = groupId;
+        obj["sortOrder"] = sortOrder;
         return obj;
     }
 
@@ -209,7 +234,13 @@ struct QuickButton {
         btn.name = obj["name"].toString();
         btn.command = obj["command"].toString();
         btn.groupId = obj["groupId"].toString();
+        btn.sortOrder = obj["sortOrder"].toInt(0);
         return btn;
+    }
+
+    // 排序比较运算符
+    bool operator<(const QuickButton& other) const {
+        return sortOrder < other.sortOrder;
     }
 };
 
@@ -217,6 +248,7 @@ struct QuickButton {
 struct ButtonGroup {
     QString id;
     QString name;
+    int sortOrder = 0;  // 排序顺序
 
     ButtonGroup() {
         id = QUuid::createUuid().toString(QUuid::WithoutBraces);
@@ -226,6 +258,7 @@ struct ButtonGroup {
         QJsonObject obj;
         obj["id"] = id;
         obj["name"] = name;
+        obj["sortOrder"] = sortOrder;
         return obj;
     }
 
@@ -233,7 +266,13 @@ struct ButtonGroup {
         ButtonGroup grp;
         grp.id = obj["id"].toString();
         grp.name = obj["name"].toString();
+        grp.sortOrder = obj["sortOrder"].toInt(0);
         return grp;
+    }
+
+    // 排序比较运算符
+    bool operator<(const ButtonGroup& other) const {
+        return sortOrder < other.sortOrder;
     }
 };
 
