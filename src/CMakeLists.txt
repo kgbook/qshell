@@ -1,3 +1,5 @@
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(qshell main.cpp
         resources/resources.qrc
         ui/MainWindow.cpp
@@ -5,6 +7,7 @@ add_executable(qshell main.cpp
         core/ConfigManager.cpp
         ui/session/SessionTabWidget.cpp
         ui/session/SessionTreeWidget.cpp
+        ui/session/SessionEditDialog.cpp
         ui/button_toolbar/CommandButtonBar.cpp
 )
 
@@ -12,6 +15,7 @@ target_link_libraries(qshell
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        Qt::SerialPort
         qtermwidget
 )
 
