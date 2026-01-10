@@ -21,7 +21,7 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.7.3'
-          modules: 'qtwebsockets qtserialport qtmultimedia'
+          modules: 'qtserialport qtmultimedia'
           aqtversion: '==3.1.20'
 
       - name: Install prerequisites
