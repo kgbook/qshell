@@ -20,6 +20,14 @@ public slots:
 signals:
     void openSession(const QString &sessionId);
 
+protected:
+    // 拖拽支持
+    void dragEnterEvent(QDragEnterEvent *event) override;
+
+    void dragMoveEvent(QDragMoveEvent *event) override;
+
+    void dropEvent(QDropEvent *event) override;
+
 private slots:
     void onItemDoubleClicked(QTreeWidgetItem *item, int column);
 
@@ -55,7 +63,22 @@ private:
     void editGroup(const QString &groupId);
 
     void deleteGroup(const QString &groupId);
-};
 
+    // 排序功能
+    void moveSessionUp(const QString &sessionId);
+
+    void moveSessionDown(const QString &sessionId);
+
+    void moveGroupUp(const QString &groupId);
+
+    void moveGroupDown(const QString &groupId);
+
+    // 拖拽辅助
+    static bool canDropOn(QTreeWidgetItem *dragItem, QTreeWidgetItem *dropTarget);
+
+    static void handleSessionDrop(const QString &sessionId, QTreeWidgetItem *dropTarget, int dropIndex);
+
+    static void handleGroupDrop(const QString &groupId, int dropIndex);
+};
 
 #endif//QSHELL_SESSIONTREEWIDGET_H
