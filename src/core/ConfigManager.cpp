@@ -156,13 +156,13 @@ void ConfigManager::addSession(const SessionData& session) {
         newSession.sortOrder = nextSessionSortOrder(newSession.groupId);
     }
     m_sessions[newSession.id] = newSession;
-    emit sessionAdded(newSession);
+    emit sessionTreeUpdated();
     save();
 }
 
 void ConfigManager::updateSession(const SessionData& session) {
     m_sessions[session.id] = session;
-    emit sessionUpdated(session);
+    emit sessionTreeUpdated();
     save();
 }
 
@@ -170,7 +170,7 @@ void ConfigManager::removeSession(const QString& id) {
     QString groupId = m_sessions.value(id).groupId;
     m_sessions.remove(id);
     normalizeSessionSortOrders(groupId);
-    emit sessionRemoved(id);
+    emit sessionTreeUpdated();
     save();
 }
 
@@ -225,7 +225,7 @@ void ConfigManager::moveSessionUp(const QString& id) {
         m_sessions[id].sortOrder = m_sessions[prevId].sortOrder;
         m_sessions[prevId].sortOrder = tempOrder;
 
-        emit sessionsReordered();
+        emit sessionTreeUpdated();
         save();
     }
 }
@@ -251,7 +251,7 @@ void ConfigManager::moveSessionDown(const QString& id) {
         m_sessions[id].sortOrder = m_sessions[nextId].sortOrder;
         m_sessions[nextId].sortOrder = tempOrder;
 
-        emit sessionsReordered();
+        emit sessionTreeUpdated();
         save();
     }
 }
@@ -282,7 +282,7 @@ void ConfigManager::moveSessionToIndex(const QString& id, int newIndex) {
         m_sessions[groupSessions[i].id].sortOrder = i;
     }
 
-    emit sessionsReordered();
+    emit sessionTreeUpdated();
     save();
 }
 
@@ -292,7 +292,7 @@ void ConfigManager::reorderSessions(const QStringList& sessionIds) {
             m_sessions[sessionIds[i]].sortOrder = i;
         }
     }
-    emit sessionsReordered();
+    emit sessionTreeUpdated();
     save();
 }
 
@@ -314,20 +314,20 @@ void ConfigManager::addGroup(const GroupData& group) {
         newGroup.sortOrder = nextGroupSortOrder();
     }
     m_groups[newGroup.id] = newGroup;
-    emit groupAdded(newGroup);
+    emit sessionTreeUpdated();
     save();
 }
 
 void ConfigManager::updateGroup(const GroupData& group) {
     m_groups[group.id] = group;
-    emit groupUpdated(group);
+    emit sessionTreeUpdated();
     save();
 }
 
 void ConfigManager::removeGroup(const QString& id) {
     m_groups.remove(id);
     normalizeGroupSortOrders();
-    emit groupRemoved(id);
+    emit sessionTreeUpdated();
     save();
 }
 
@@ -378,7 +378,7 @@ void ConfigManager::moveGroupUp(const QString& id) {
         m_groups[id].sortOrder = m_groups[prevId].sortOrder;
         m_groups[prevId].sortOrder = tempOrder;
 
-        emit groupsReordered();
+        emit sessionTreeUpdated();
         save();
     }
 }
@@ -402,7 +402,7 @@ void ConfigManager::moveGroupDown(const QString& id) {
         m_groups[id].sortOrder = m_groups[nextId].sortOrder;
         m_groups[nextId].sortOrder = tempOrder;
 
-        emit groupsReordered();
+        emit sessionTreeUpdated();
         save();
     }
 }
@@ -430,7 +430,7 @@ void ConfigManager::moveGroupToIndex(const QString& id, int newIndex) {
         m_groups[sortedGroups[i].id].sortOrder = i;
     }
 
-    emit groupsReordered();
+    emit sessionTreeUpdated();
     save();
 }
 
@@ -440,7 +440,7 @@ void ConfigManager::reorderGroups(const QStringList& groupIds) {
             m_groups[groupIds[i]].sortOrder = i;
         }
     }
-    emit groupsReordered();
+    emit sessionTreeUpdated();
     save();
 }
 

@@ -31,14 +31,7 @@ SessionTreeWidget::SessionTreeWidget(QWidget *parent)
 
     // 连接配置管理器信号
     auto config = ConfigManager::instance();
-    connect(config, &ConfigManager::sessionAdded, this, &SessionTreeWidget::onSessionAdded);
-    connect(config, &ConfigManager::sessionUpdated, this, &SessionTreeWidget::onSessionUpdated);
-    connect(config, &ConfigManager::sessionRemoved, this, &SessionTreeWidget::onSessionRemoved);
-    connect(config, &ConfigManager::groupAdded, this, &SessionTreeWidget::onGroupAdded);
-    connect(config, &ConfigManager::groupUpdated, this, &SessionTreeWidget::onGroupUpdated);
-    connect(config, &ConfigManager::groupRemoved, this, &SessionTreeWidget::onGroupRemoved);
-    connect(config, &ConfigManager::sessionsReordered, this, &SessionTreeWidget::refreshTree);
-    connect(config, &ConfigManager::groupsReordered, this, &SessionTreeWidget::refreshTree);
+    connect(config, &ConfigManager::sessionTreeUpdated, this, &SessionTreeWidget::refreshTree);
 }
 
 void SessionTreeWidget::setupUI() {
@@ -544,34 +537,4 @@ void SessionTreeWidget::handleGroupDrop(const QString &groupId, int dropIndex) {
     }
 
     config->reorderGroups(groupIds);
-}
-
-void SessionTreeWidget::onSessionAdded(const SessionData &session) {
-    Q_UNUSED(session)
-    refreshTree();
-}
-
-void SessionTreeWidget::onSessionUpdated(const SessionData &session) {
-    Q_UNUSED(session)
-    refreshTree();
-}
-
-void SessionTreeWidget::onSessionRemoved(const QString &id) {
-    Q_UNUSED(id)
-    refreshTree();
-}
-
-void SessionTreeWidget::onGroupAdded(const GroupData &group) {
-    Q_UNUSED(group)
-    refreshTree();
-}
-
-void SessionTreeWidget::onGroupUpdated(const GroupData &group) {
-    Q_UNUSED(group)
-    refreshTree();
-}
-
-void SessionTreeWidget::onGroupRemoved(const QString &id) {
-    Q_UNUSED(id)
-    refreshTree();
 }

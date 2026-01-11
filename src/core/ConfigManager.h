@@ -77,14 +77,7 @@ public:
     void setGlobalSettings(const GlobalSettings& settings);
 
 signals:
-    void sessionAdded(const SessionData& session);
-    void sessionUpdated(const SessionData& session);
-    void sessionRemoved(const QString& id);
-    void sessionsReordered();
-    void groupAdded(const GroupData& group);
-    void groupUpdated(const GroupData& group);
-    void groupRemoved(const QString& id);
-    void groupsReordered();
+    void sessionTreeUpdated();
     void buttonGroupsChanged();
     void quickButtonsChanged();
     void globalSettingsChanged();

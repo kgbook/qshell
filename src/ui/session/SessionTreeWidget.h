@@ -35,18 +35,6 @@ private slots:
 
     void onCustomContextMenu(const QPoint &pos);
 
-    void onSessionAdded(const SessionData &session);
-
-    void onSessionUpdated(const SessionData &session);
-
-    void onSessionRemoved(const QString &id);
-
-    void onGroupAdded(const GroupData &group);
-
-    void onGroupUpdated(const GroupData &group);
-
-    void onGroupRemoved(const QString &id);
-
 private:
     void setupUI();
 

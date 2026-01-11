@@ -126,8 +126,6 @@ struct SessionData {
     ProtocolType protocolType = ProtocolType::LocalShell;
     SSHConfig sshConfig;
     SerialConfig serialConfig;
-    bool enableLog = false;
-    QString logPath;
     int sortOrder = 0;  // 排序顺序
 
     SessionData() {
@@ -145,8 +143,6 @@ struct SessionData {
         } else if (protocolType == ProtocolType::Serial) {
             obj["serialConfig"] = serialConfig.toJson();
         }
-        obj["enableLog"] = enableLog;
-        obj["logPath"] = logPath;
         obj["sortOrder"] = sortOrder;
         return obj;
     }
@@ -162,8 +158,6 @@ struct SessionData {
         } else if (data.protocolType == ProtocolType::Serial) {
             data.serialConfig = SerialConfig::fromJson(obj["serialConfig"].toObject());
         }
-        data.enableLog = obj["enableLog"].toBool();
-        data.logPath = obj["logPath"].toString();
         data.sortOrder = obj["sortOrder"].toInt(0);
         return data;
     }
