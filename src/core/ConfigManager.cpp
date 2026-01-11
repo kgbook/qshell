@@ -18,6 +18,7 @@ ConfigManager* ConfigManager::instance() {
 
 ConfigManager::ConfigManager(QObject* parent)
     : QObject(parent) {
+    load();
 }
 
 QString ConfigManager::configFilePath() {
