@@ -65,13 +65,13 @@ private:
     void deleteGroup(const QString &groupId);
 
     // 排序功能
-    void moveSessionUp(const QString &sessionId);
+    static void moveSessionUp(const QString &sessionId);
 
-    void moveSessionDown(const QString &sessionId);
+    static void moveSessionDown(const QString &sessionId);
 
-    void moveGroupUp(const QString &groupId);
+    static void moveGroupUp(const QString &groupId);
 
-    void moveGroupDown(const QString &groupId);
+    static void moveGroupDown(const QString &groupId);
 
     // 拖拽辅助
     static bool canDropOn(QTreeWidgetItem *dragItem, QTreeWidgetItem *dropTarget);

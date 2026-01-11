@@ -37,6 +37,8 @@ SessionTreeWidget::SessionTreeWidget(QWidget *parent)
     connect(config, &ConfigManager::groupAdded, this, &SessionTreeWidget::onGroupAdded);
     connect(config, &ConfigManager::groupUpdated, this, &SessionTreeWidget::onGroupUpdated);
     connect(config, &ConfigManager::groupRemoved, this, &SessionTreeWidget::onGroupRemoved);
+    connect(config, &ConfigManager::sessionsReordered, this, &SessionTreeWidget::refreshTree);
+    connect(config, &ConfigManager::groupsReordered, this, &SessionTreeWidget::refreshTree);
 }
 
 void SessionTreeWidget::setupUI() {
@@ -170,10 +172,10 @@ void SessionTreeWidget::onCustomContextMenu(const QPoint &pos) {
         menu.addSeparator();
 
         // 添加排序选项
-        QAction *moveUpAction = menu.addAction(tr("Move Up"), this, [this, groupId]() {
+        QAction *moveUpAction = menu.addAction(tr("Move Up"), this, [groupId]() {
             moveGroupUp(groupId);
         });
-        QAction *moveDownAction = menu.addAction(tr("Move Down"), this, [this, groupId]() {
+        QAction *moveDownAction = menu.addAction(tr("Move Down"), this, [groupId]() {
             moveGroupDown(groupId);
         });
 
@@ -210,10 +212,10 @@ void SessionTreeWidget::onCustomContextMenu(const QPoint &pos) {
         menu.addSeparator();
 
         // 添加排序选项
-        QAction *moveUpAction = menu.addAction(tr("Move Up"), this, [this, sessionId]() {
+        QAction *moveUpAction = menu.addAction(tr("Move Up"), this, [sessionId]() {
             moveSessionUp(sessionId);
         });
-        QAction *moveDownAction = menu.addAction(tr("Move Down"), this, [this, sessionId]() {
+        QAction *moveDownAction = menu.addAction(tr("Move Down"), this, [sessionId]() {
             moveSessionDown(sessionId);
         });
 
@@ -337,22 +339,18 @@ void SessionTreeWidget::deleteGroup(const QString &groupId) {
 // 排序功能实现
 void SessionTreeWidget::moveSessionUp(const QString &sessionId) {
     ConfigManager::instance()->moveSessionUp(sessionId);
-    refreshTree();
 }
 
 void SessionTreeWidget::moveSessionDown(const QString &sessionId) {
     ConfigManager::instance()->moveSessionDown(sessionId);
-    refreshTree();
 }
 
 void SessionTreeWidget::moveGroupUp(const QString &groupId) {
     ConfigManager::instance()->moveGroupUp(groupId);
-    refreshTree();
 }
 
 void SessionTreeWidget::moveGroupDown(const QString &groupId) {
     ConfigManager::instance()->moveGroupDown(groupId);
-    refreshTree();
 }
 
 // 拖拽功能实现
