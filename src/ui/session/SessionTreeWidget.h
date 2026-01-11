@@ -4,6 +4,8 @@
 #include <QItemDelegate>
 #include <QTreeWidget>
 
+#include "core/SessionData.h"
+
 class SessionTreeWidget : public QTreeWidget {
     Q_OBJECT
 
@@ -33,15 +35,15 @@ private slots:
 
     void onCustomContextMenu(const QPoint &pos);
 
-    void onSessionAdded(const class SessionData &session);
+    void onSessionAdded(const SessionData &session);
 
-    void onSessionUpdated(const class SessionData &session);
+    void onSessionUpdated(const SessionData &session);
 
     void onSessionRemoved(const QString &id);
 
-    void onGroupAdded(const class GroupData &group);
+    void onGroupAdded(const GroupData &group);
 
-    void onGroupUpdated(const class GroupData &group);
+    void onGroupUpdated(const GroupData &group);
 
     void onGroupRemoved(const QString &id);
 
