@@ -1,5 +1,4 @@
 #include "qtermwidget.h"
-#include <unistd.h>
 #include <QDebug>
 #include <QtWidgets/QMessageBox>
 #include "SerialTerminal.h"

@@ -47,7 +47,7 @@ void MainWindow::onOpenSession(const QString &sessionId) {
     }
 
     terminal->connect();
-    // connect(terminal, &BaseTerminal::onSessionError, this, &MainWindow::onSessionError);
+    connect(terminal, &BaseTerminal::onSessionError, this, &MainWindow::onSessionError);
     tabWidget_->addTab(terminal, *connectStateIcon_, session.name);
     tabWidget_->setCurrentWidget(terminal);
     terminal->setFocus();
