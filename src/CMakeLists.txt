@@ -9,6 +9,8 @@ add_executable(qshell main.cpp
         ui/session/SessionTreeWidget.cpp
         ui/session/SessionEditDialog.cpp
         ui/session/GroupEditDialog.cpp
+        ui/terminal/BaseTerminal.cpp
+        ui/terminal/SerialTerminal.cpp
         ui/button_toolbar/CommandButtonBar.cpp
 )
 

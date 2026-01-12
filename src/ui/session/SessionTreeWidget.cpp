@@ -98,8 +98,7 @@ void SessionTreeWidget::refreshTree() {
         item->setData(0, ItemIdRole, session.id);
         item->setFlags(item->flags() | Qt::ItemIsDragEnabled);
 
-        QStyle::StandardPixmap icon = QStyle::SP_ComputerIcon;
-        item->setIcon(0, style()->standardIcon(icon));
+        item->setIcon(0, style()->standardIcon(QStyle::SP_ComputerIcon));
     }
 }
 

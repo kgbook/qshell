@@ -7,6 +7,7 @@
 class SessionTabWidget;
 class SessionTreeWidget;
 class CommandButtonBar;
+class BaseTerminal;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -16,12 +17,25 @@ public:
     ~MainWindow() override = default;
 
 private:
+    void onOpenSession(const QString& sessionId);
+    void onSessionError(BaseTerminal *terminal) const;
+    void onDisconnectAction() const;
+    void onTabChanged(int index);
+    void onTabCloseRequested(int index) const;
+
+    void initIcons();
     void initSessionTree();
     void initTableWidget();
     void initCommandWindow();
     void initButtonBar();
 
+    QIcon *connectIcon_ = nullptr;
+    QIcon *disconnectIcon_ = nullptr;
+    QIcon *connectStateIcon_ = nullptr;
+    QIcon *disconnectStateIcon_ = nullptr;
+
     // session table
+    BaseTerminal *currentTab_ = nullptr;
     SessionTabWidget *tabWidget_ = nullptr;
     SessionTreeWidget *treeWidget_ = nullptr;
 
