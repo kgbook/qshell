@@ -1,6 +1,7 @@
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-add_executable(qshell main.cpp
+
+set(SRC_FILES main.cpp
         resources/resources.qrc
         ui/MainWindow.cpp
         core/CryptoHelper.cpp
@@ -12,7 +13,19 @@ add_executable(qshell main.cpp
         ui/terminal/BaseTerminal.cpp
         ui/terminal/SerialTerminal.cpp
         ui/terminal/LocalTerminal.cpp
-        ui/button_toolbar/CommandButtonBar.cpp
+        ui/button_toolbar/CommandButtonBar.cpp )
+
+if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(SRC_FILES ${SRC_FILES} ui/terminal/SSHTerminalLinux.cpp)
+elseif (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    set(SRC_FILES ${SRC_FILES} ui/terminal/SSHTerminalWindows.cpp)
+else ()
+    message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} not supported")
+endif ()
+
+add_executable(qshell main.cpp
+        resources/resources.qrc
+        ${SRC_FILES}
 )
 
 target_link_libraries(qshell

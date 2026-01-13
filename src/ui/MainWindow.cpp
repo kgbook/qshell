@@ -6,6 +6,7 @@
 #include "ui/terminal/BaseTerminal.h"
 #include "ui/terminal/SerialTerminal.h"
 #include "ui/terminal/LocalTerminal.h"
+#include "ui/terminal/SSHTerminal.h"
 #include <QDockWidget>
 
 MainWindow::MainWindow(QWidget *parent) {
@@ -44,6 +45,8 @@ void MainWindow::onOpenSession(const QString &sessionId) {
         terminal = new SerialTerminal(session, this);
     } else if (session.protocolType == ProtocolType::LocalShell) {
         terminal = new LocalTerminal(this);
+    } else if (session.protocolType == ProtocolType::SSH) {
+        terminal = new SSHTerminal(session, this);
     } else {
         qDebug() << "unknown session type!!";
         return;
