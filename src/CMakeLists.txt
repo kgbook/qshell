@@ -11,6 +11,7 @@ add_executable(qshell main.cpp
         ui/session/GroupEditDialog.cpp
         ui/terminal/BaseTerminal.cpp
         ui/terminal/SerialTerminal.cpp
+        ui/terminal/LocalTerminal.cpp
         ui/button_toolbar/CommandButtonBar.cpp
 )
 
@@ -20,6 +21,7 @@ target_link_libraries(qshell
         Qt::Widgets
         Qt::SerialPort
         qtermwidget
+        ptyqt
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")

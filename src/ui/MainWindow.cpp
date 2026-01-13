@@ -5,6 +5,7 @@
 #include "core/ConfigManager.h"
 #include "ui/terminal/BaseTerminal.h"
 #include "ui/terminal/SerialTerminal.h"
+#include "ui/terminal/LocalTerminal.h"
 #include <QDockWidget>
 
 MainWindow::MainWindow(QWidget *parent) {
@@ -41,6 +42,8 @@ void MainWindow::onOpenSession(const QString &sessionId) {
     BaseTerminal *terminal = nullptr;
     if (session.protocolType == ProtocolType::Serial) {
         terminal = new SerialTerminal(session, this);
+    } if (session.protocolType == ProtocolType::LocalShell) {
+        terminal = new LocalTerminal(this);
     } else {
         qDebug() << "unknown session type!!";
         return;
