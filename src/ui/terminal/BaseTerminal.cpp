@@ -18,12 +18,8 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
     setTerminalFont(*font_);
     setHistorySize(128000);
     setTerminalSizeHint(false);
-    QStringList env;
-    env.append("TERM=xterm-256color");
-    // setEnvironment(env);
-
     //set color scheme
-    setColorScheme("Tango");
+    // setColorScheme("Tango");
 
     //set scroll bar
     setScrollBarPosition(ScrollBarRight);
@@ -36,37 +32,70 @@ BaseTerminal::~BaseTerminal() {
     disableLogSession();
 }
 void BaseTerminal::startLocalShell() {
-#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
-    QString shellPath = qEnvironmentVariable("SHELL");
-#elif defined(Q_OS_WIN)
-    QString shellPath = "C:/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
-#endif
-    localShell_ = PtyQt::createPtyProcess();
-    QObject::connect(this, &QTermWidget::termSizeChange, [=](int lines, int columns) {
-        localShell_->resize(static_cast<qint16>(columns), static_cast<qint16>(lines));
-    });
+    QString shellPath;
     QStringList args;
-    localShell_->startProcess(shellPath, args, QDir::homePath(), QProcessEnvironment::systemEnvironment().toStringList(),
-                              static_cast<qint16>(screenColumnsCount()), static_cast<qint16>(screenLinesCount()));
-    QObject::connect(localShell_->notifier(), &QIODevice::readyRead, [=]() {
-        QByteArray data = localShell_->readAll();
-        if (!data.isEmpty()) {
-            this->recvData(data.data(), static_cast<int>(data.size()));
-        }
-    });
-    QObject::connect(localShell_->notifier(), &QIODevice::aboutToClose, [=]() {
+    QStringList envs = QProcessEnvironment::systemEnvironment().toStringList();
+
+#if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
+    shellPath = qEnvironmentVariable("SHELL");
+#elif defined(Q_OS_WIN)
+    shellPath = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
+    // 添加必要的环境变量
+    // envs.append("TERM=xterm-256color");
+#endif
+
+    // 明确指定 ConPty
+    localShell_ = PtyQt::createPtyProcess(IPtyProcess::PtyType::ConPty);
+    if (!localShell_) {
+        qWarning() << "Failed to create ConPty process!";
+        return;
+    }
+
+    // 连接发送数据
+    QObject::connect(this, &QTermWidget::sendData, this, [this](const char *data, int size) {
         if (localShell_) {
-            QByteArray restOfOutput = localShell_->readAll();
-            if (!restOfOutput.isEmpty()) {
-                this->recvData(restOfOutput.data(), static_cast<int>(restOfOutput.size()));
-                localShell_->notifier()->disconnect();
-            }
+            QByteArray senddata(data, size);
+            localShell_->write(senddata);
         }
     });
-    QObject::connect(this, &QTermWidget::sendData, [=](const char *data, int size) {
-        localShell_->write(QByteArray(data, size));
+
+    // 连接大小变化
+    QObject::connect(this, &QTermWidget::termSizeChange, this, [this](int lines, int columns) {
+        if (localShell_) {
+            localShell_->resize(static_cast<qint16>(columns), static_cast<qint16>(lines));
+        }
     });
+
+    // 启动进程
+    bool ret = localShell_->startProcess(
+        shellPath,
+        args,
+        QDir::homePath(),
+        envs,
+        static_cast<qint16>(screenColumnsCount()),
+        static_cast<qint16>(screenLinesCount())
+    );
+
+    if (!ret) {
+        qWarning() << "startProcess failed:" << localShell_->lastError();
+        return;
+    }
+
+    // 连接 notifier（如果可用）
+    if (QIODevice* notifier = localShell_->notifier()) {
+        QObject::connect(notifier, &QIODevice::readyRead, this, [this]() {
+            QByteArray data = localShell_->readAll();
+            if (!data.isEmpty()) {
+                this->recvData(data.data(), static_cast<int>(data.size()));
+            }
+        });
+    } else {
+        qDebug() << "localShell_->notifier() is nullptr";
+    }
+
+    connect_ = true;
 }
+
 
 bool BaseTerminal::isConnect() const {
     return connect_;
