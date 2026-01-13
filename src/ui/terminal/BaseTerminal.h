@@ -2,7 +2,7 @@
 #define KKSHELL_BASE_TERMINAL_H
 
 #include "qtermwidget.h"
-
+class IPtyProcess;
 class BaseTerminal : public QTermWidget {
 
 Q_OBJECT
@@ -11,6 +11,7 @@ public:
     explicit BaseTerminal(QWidget *parent);
     ~BaseTerminal() override;
 
+    void startLocalShell();
     virtual void connect() = 0;
     virtual void disconnect() = 0;
     bool isConnect() const;
@@ -39,6 +40,7 @@ protected:
     bool loggingHex_ = false;
     std::string logHexPath_;
     FILE *logHexFp_ = nullptr;
+    IPtyProcess *localShell_ = nullptr;
 };
 
 

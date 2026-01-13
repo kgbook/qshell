@@ -3,7 +3,7 @@
 
 #include "BaseTerminal.h"
 
-class IPtyProcess;
+
 
 class LocalTerminal : public BaseTerminal {
 public:
@@ -12,8 +12,6 @@ public:
     void connect() override;
     void disconnect() override;
 
-private:
-    IPtyProcess *localShell_ = nullptr;
 };
 
 

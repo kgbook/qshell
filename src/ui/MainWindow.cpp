@@ -42,7 +42,7 @@ void MainWindow::onOpenSession(const QString &sessionId) {
     BaseTerminal *terminal = nullptr;
     if (session.protocolType == ProtocolType::Serial) {
         terminal = new SerialTerminal(session, this);
-    } if (session.protocolType == ProtocolType::LocalShell) {
+    } else if (session.protocolType == ProtocolType::LocalShell) {
         terminal = new LocalTerminal(this);
     } else {
         qDebug() << "unknown session type!!";
