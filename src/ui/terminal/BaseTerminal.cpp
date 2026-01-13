@@ -35,17 +35,16 @@ void BaseTerminal::startLocalShell() {
     QString shellPath;
     QStringList args;
     QStringList envs = QProcessEnvironment::systemEnvironment().toStringList();
+    envs.append("TERM=xterm-256color");
 
 #if defined(Q_OS_LINUX) || defined(Q_OS_MACOS)
     shellPath = qEnvironmentVariable("SHELL");
 #elif defined(Q_OS_WIN)
     shellPath = "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
-    // 添加必要的环境变量
-    // envs.append("TERM=xterm-256color");
 #endif
 
     // 明确指定 ConPty
-    localShell_ = PtyQt::createPtyProcess(IPtyProcess::PtyType::ConPty);
+    localShell_ = PtyQt::createPtyProcess();
     if (!localShell_) {
         qWarning() << "Failed to create ConPty process!";
         return;
