@@ -39,6 +39,10 @@ target_link_libraries(qshell
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    target_link_libraries(qshell libssh2_static)
+endif ()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "$ENV{Qt6_DIR}/bin")
     # 编译后执行 windeployqt
     add_custom_command(TARGET qshell POST_BUILD
