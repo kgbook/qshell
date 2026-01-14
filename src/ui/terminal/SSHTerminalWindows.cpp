@@ -1,12 +1,7 @@
 #include "SSHTerminal.h"
-#include <QCoreApplication>
+#include "iptyprocess.h"
+
 #include <QDebug>
-#include <QFile>
-#include <QTime>
-#include <QtCore/QEventLoop>
-#include <QRandomGenerator>
-#include <QRegularExpression>
-#include <unistd.h>
 
 SSHTerminal::SSHTerminal(const SessionData &session, QWidget *parent) : BaseTerminal(parent) {
     sessionData_ = session;
@@ -22,10 +17,6 @@ void SSHTerminal::connect() {
 void SSHTerminal::disconnect() {
 }
 
-QString SSHTerminal::createShellFile() {
-
-}
-
-bool SSHTerminal::isInRemoteServer() {
-
+bool SSHTerminal::isInRemoteServer() const {
+    return localShell_->hasChildProcess();
 }
