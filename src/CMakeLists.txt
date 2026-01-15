@@ -35,7 +35,6 @@ target_link_libraries(qshell
         Qt::SerialPort
         qtermwidget
         ptyqt
-        libssh2_static
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
