@@ -11,17 +11,13 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
 
     auto globalSettings = ConfigManager::instance()->globalSettings();
 
-    //font
     font_ = new QFont();
     font_->setFamily(globalSettings.fontFamily);
     font_->setPointSize(globalSettings.fontSize);
     setTerminalFont(*font_);
     setHistorySize(128000);
     setTerminalSizeHint(false);
-    //set color scheme
-    // setColorScheme("Tango");
-
-    //set scroll bar
+    setColorScheme("Tango");
     setScrollBarPosition(ScrollBarRight);
 
     // QObject::connect(this, &QTermWidget::onNewLine, this, &BaseTerminal::onNewLine);

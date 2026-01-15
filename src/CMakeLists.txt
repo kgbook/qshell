@@ -25,6 +25,7 @@ endif ()
 
 add_executable(qshell main.cpp
         resources/resources.qrc
+        resources/libqtermwidget.qrc
         ${SRC_FILES}
 )
 
