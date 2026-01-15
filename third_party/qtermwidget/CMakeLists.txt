@@ -38,7 +38,7 @@ set(SRC_FILES
 set(QRC_FILES res.qrc)
 set(QFORMS_FILES util/SearchBar.ui)
 
-add_library(qtermwidget
+add_library(qtermwidget SHARED
         ${SRC_FILES}
         ${SRC_HEADERS}
         ${QRC_FILES}
