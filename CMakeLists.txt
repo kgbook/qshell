@@ -23,8 +23,6 @@ find_package(Qt6 COMPONENTS
         SerialPort
         REQUIRED)
 
-option(QSLOG_BUILD_TESTS "build tests" ON)
-option(QSLOG_BUILD_EXAMPLES "build examples" ON)
 # clang-tidy
 option(QSLOG_CLANG_TIDY_ENABLE "run clang-tidy" ON)
 if(QSLOG_CLANG_TIDY_ENABLE AND ${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
@@ -35,13 +33,3 @@ endif()
 
 add_subdirectory(third_party)
 add_subdirectory(src)
-
-
-if (QSLOG_BUILD_EXAMPLES)
-    add_subdirectory(examples)
-endif ()
-
-if (QSLOG_BUILD_TESTS)
-    enable_testing()
-    add_subdirectory(tests)
-endif()
