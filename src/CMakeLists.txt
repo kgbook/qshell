@@ -4,6 +4,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 set(SRC_FILES main.cpp
         resources/resources.qrc
         ui/MainWindow.cpp
+        ui/SettingDialog.cpp
         core/CryptoHelper.cpp
         core/ConfigManager.cpp
         ui/session/SessionTabWidget.cpp

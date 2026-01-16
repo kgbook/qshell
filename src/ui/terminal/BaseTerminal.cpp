@@ -17,7 +17,7 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
     setTerminalFont(*font_);
     setHistorySize(128000);
     setTerminalSizeHint(false);
-    setColorScheme("Tango");
+    setColorScheme(globalSettings.colorScheme);
     setScrollBarPosition(ScrollBarRight);
 
     // QObject::connect(this, &QTermWidget::onNewLine, this, &BaseTerminal::onNewLine);

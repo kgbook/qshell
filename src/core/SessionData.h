@@ -273,12 +273,14 @@ struct ButtonGroup {
 // 全局设置
 struct GlobalSettings {
     QString fontFamily = "Consolas";
-    int fontSize = 12;
+    int fontSize = 14;
+    QString colorScheme = "Tango";
 
     QJsonObject toJson() const {
         QJsonObject obj;
         obj["fontFamily"] = fontFamily;
         obj["fontSize"] = fontSize;
+        obj["colorScheme"] = colorScheme;
         return obj;
     }
 
@@ -286,6 +288,7 @@ struct GlobalSettings {
         GlobalSettings settings;
         settings.fontFamily = obj["fontFamily"].toString("Consolas");
         settings.fontSize = obj["fontSize"].toInt(12);
+        settings.colorScheme = obj["colorScheme"].toString("Tango");
         return settings;
     }
 };

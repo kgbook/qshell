@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "SettingDialog.h"
 #include "command/CommandButtonBar.h"
 #include "core/ConfigManager.h"
 #include "session/SessionTabWidget.h"
@@ -278,8 +279,8 @@ void MainWindow::initToolbar() {
 }
 
 void MainWindow::onSettingsAction() {
-    // SettingDialog settingDialog(this);
-    // settingDialog.exec();
+    SettingDialog settingDialog(this);
+    settingDialog.exec();
 }
 
 void MainWindow::onConnectAction() {
