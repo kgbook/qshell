@@ -24,18 +24,74 @@ private slots:
     void onTabCloseRequested(int index) const;
     void onCommandSend(const QString &command);
 
+    void onSettingsAction();
+    void onToggleSaveLogAction();
+    void onToggleSaveHexLogAction();
+    void onConnectAction();
+    void onExitAction();
+
+    void onCopySelectedAction();
+    void onCopyAllAction();
+    void onPasteAction();
+    void onFindAction();
+    void onClearScreenAction();
+
+    void onToggleToolbarAction();
+    void onToggleSessionManagerAction();
+    void onToggleCommandWindowAction();
+    void onToggleCommandButtonAction();
+
 private:
     void initIcons();
+    void initActions();
+    void initMenu();
+    void initToolbar();
     void initSessionTree();
     void initTableWidget();
     void initCommandWindow();
     void initButtonBar();
-    void initMenuBar();
 
     QIcon *connectIcon_ = nullptr;
     QIcon *disconnectIcon_ = nullptr;
     QIcon *connectStateIcon_ = nullptr;
     QIcon *disconnectStateIcon_ = nullptr;
+
+    QMenuBar *mainMenuBar_ = nullptr;
+    QMenu *fileMenu_ = nullptr;
+    QMenu *editMenu_ = nullptr;
+    QMenu *viewMenu_ = nullptr;
+    QMenu *helpMenu_ = nullptr;
+
+    QToolBar *toolBar_ = nullptr;
+    QIcon *settingsIcon_ = nullptr;
+    QIcon *exitIcon_ = nullptr;
+
+    QIcon *copySelectedIcon_ = nullptr;
+    QIcon *copyAllIcon_ = nullptr;
+    QIcon *pasteIcon_ = nullptr;
+    QIcon *findIcon_ = nullptr;
+    QIcon *clearScreenIcon_ = nullptr;
+
+    QIcon *toggleOnIcon_ = nullptr;
+    QIcon *toggleOffIcon_ = nullptr;
+
+    QAction *settingsAction_ = nullptr;
+    QAction *toggleSaveLogAction_  = nullptr;
+    QAction *toggleSaveHexLogAction_ = nullptr;
+    QAction *connectAction_ = nullptr;
+    QAction *disConnectAction_ = nullptr;
+    QAction *exitAction_ = nullptr;
+
+    QAction *copySelectedAction_ = nullptr;
+    QAction *copyAllAction_ = nullptr;
+    QAction *pasteAction_ = nullptr;
+    QAction *findAction_ = nullptr;
+    QAction *clearScreenAction_ = nullptr;
+
+    QAction *toggleToolbarAction_ = nullptr;
+    QAction *toggleSessionManagerAction_ = nullptr;
+    QAction *toggleCommandWindowAction_ = nullptr;
+    QAction *toggleCommandButtonAction_ = nullptr;
 
     // session table
     BaseTerminal *currentTab_ = nullptr;
