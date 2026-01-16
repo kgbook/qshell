@@ -14,6 +14,7 @@
 #include <QTextEdit>
 #include <QDialogButtonBox>
 #include <QLabel>
+#include <QContextMenuEvent>
 
 CommandButtonBar::CommandButtonBar(QWidget *parent)
     : QToolBar(parent) {
@@ -37,24 +38,12 @@ void CommandButtonBar::setupUI() {
     groupComboBox_ = new QComboBox(this);
     groupComboBox_->setMinimumWidth(120);
     groupComboBox_->setMaximumWidth(200);
+    groupComboBox_->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(groupComboBox_, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &CommandButtonBar::onGroupChanged);
+    connect(groupComboBox_, &QComboBox::customContextMenuRequested,
+            this, &CommandButtonBar::onGroupContextMenu);
     addWidget(groupComboBox_);
-
-    addSeparator();
-
-    // 管理分组按钮
-    auto *manageBtn = new QPushButton(tr("管理"), this);
-    manageBtn->setMaximumWidth(60);
-    connect(manageBtn, &QPushButton::clicked, this, &CommandButtonBar::onManageGroups);
-    addWidget(manageBtn);
-
-    // 添加按钮
-    auto *addBtn = new QPushButton(tr("+"), this);
-    addBtn->setMaximumWidth(30);
-    addBtn->setToolTip(tr("添加命令按钮"));
-    connect(addBtn, &QPushButton::clicked, this, &CommandButtonBar::onAddButton);
-    addWidget(addBtn);
 
     addSeparator();
 
@@ -151,7 +140,7 @@ void CommandButtonBar::onButtonClicked() {
     }
 }
 
-void CommandButtonBar::onManageGroups() {
+void CommandButtonBar::onGroupContextMenu(const QPoint &pos) {
     QMenu menu(this);
 
     // 添加分组
@@ -168,11 +157,11 @@ void CommandButtonBar::onManageGroups() {
         }
     });
 
-    menu.addSeparator();
-
     // 当前分组操作
     QString currentGroupId = groupComboBox_->currentData().toString();
     if (!currentGroupId.isEmpty()) {
+        menu.addSeparator();
+
         // 重命名分组
         QAction *renameAction = menu.addAction(tr("重命名当前分组"));
         connect(renameAction, &QAction::triggered, this, [this, currentGroupId]() {
@@ -215,7 +204,30 @@ void CommandButtonBar::onManageGroups() {
         });
     }
 
-    menu.exec(QCursor::pos());
+    menu.exec(groupComboBox_->mapToGlobal(pos));
+}
+
+void CommandButtonBar::contextMenuEvent(QContextMenuEvent *event) {
+    // 检查点击位置是否在某个按钮上，如果是则不处理（由按钮自己的右键菜单处理）
+    QWidget *child = childAt(event->pos());
+    if (child) {
+        // 检查是否点击在命令按钮上
+        auto *btn = qobject_cast<QPushButton*>(child);
+        if (btn && buttons_.values().contains(btn)) {
+            // 点击在命令按钮上，让按钮自己处理
+            return;
+        }
+        // 检查是否点击在分组下拉框上
+        if (child == groupComboBox_ || groupComboBox_->isAncestorOf(child)) {
+            return;
+        }
+    }
+
+    // 在空白处显示添加按钮菜单
+    QMenu menu(this);
+    QAction *addAction = menu.addAction(tr("添加命令按钮"));
+    connect(addAction, &QAction::triggered, this, &CommandButtonBar::onAddButton);
+    menu.exec(event->globalPos());
 }
 
 void CommandButtonBar::onAddButton() {
@@ -226,7 +238,7 @@ void CommandButtonBar::onAddButton() {
         auto groups = ConfigManager::instance()->buttonGroups();
         if (groups.isEmpty()) {
             QMessageBox::information(this, tr("提示"),
-                                     tr("请先创建一个分组"));
+                                     tr("请先创建一个分组（在分组下拉框上右键点击）"));
             return;
         }
     }

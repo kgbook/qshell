@@ -21,11 +21,14 @@ public:
 private slots:
     void onGroupChanged(int index);
     void onButtonClicked();
-    void onManageGroups();
+    void onGroupContextMenu(const QPoint &pos);
     void onAddButton();
     void onButtonContextMenu(const QPoint &pos);
     void refreshButtons();
     void refreshGroups();
+
+protected:
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:
     void setupUI();
