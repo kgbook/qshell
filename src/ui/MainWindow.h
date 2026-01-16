@@ -2,11 +2,11 @@
 #define QSHELL_MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTextEdit>
 
 class SessionTabWidget;
 class SessionTreeWidget;
 class CommandButtonBar;
+class CommandWindow;
 class BaseTerminal;
 
 class MainWindow : public QMainWindow {
@@ -16,18 +16,20 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override = default;
 
-private:
+private slots:
     void onOpenSession(const QString& sessionId);
     void onSessionError(BaseTerminal *terminal) const;
     void onDisconnectAction() const;
     void onTabChanged(int index);
     void onTabCloseRequested(int index) const;
 
+private:
     void initIcons();
     void initSessionTree();
     void initTableWidget();
     void initCommandWindow();
     void initButtonBar();
+    void initMenuBar();
 
     QIcon *connectIcon_ = nullptr;
     QIcon *disconnectIcon_ = nullptr;
@@ -43,13 +45,12 @@ private:
     QDockWidget *sessionDock_ = nullptr;
     SessionTreeWidget *sessionTree_ = nullptr;
 
-    //command window
+    // command window
     QDockWidget *commandWindowDock_ = nullptr;
-    QTextEdit *commandEditor_ = nullptr;
+    CommandWindow *commandWindow_ = nullptr;
 
     // command button bar
     CommandButtonBar *commandButtonBar_ = nullptr;
 };
 
-
-#endif//QSHELL_MAINWINDOW_H
+#endif // QSHELL_MAINWINDOW_H

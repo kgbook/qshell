@@ -7,18 +7,24 @@
 #include "ui/terminal/SerialTerminal.h"
 #include "ui/terminal/LocalTerminal.h"
 #include "ui/terminal/SSHTerminal.h"
-#include <QDockWidget>
+#include "ui/command/CommandWindow.h"
 
-MainWindow::MainWindow(QWidget *parent) {
+#include <QDockWidget>
+#include <QMenuBar>
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent) {
     setWindowState(Qt::WindowMaximized);
     setContextMenuPolicy(Qt::NoContextMenu);
     QIcon windowIcon(":/images/application.png");
     setWindowIcon(windowIcon);
+
     initIcons();
     initTableWidget();
     initSessionTree();
     initCommandWindow();
     initButtonBar();
+    initMenuBar();
 }
 
 void MainWindow::initIcons() {
@@ -41,6 +47,7 @@ void MainWindow::initTableWidget() {
 void MainWindow::onOpenSession(const QString &sessionId) {
     auto session = ConfigManager::instance()->session(sessionId);
     BaseTerminal *terminal = nullptr;
+
     if (session.protocolType == ProtocolType::Serial) {
         terminal = new SerialTerminal(session, this);
     } else if (session.protocolType == ProtocolType::LocalShell) {
@@ -79,21 +86,20 @@ void MainWindow::initSessionTree() {
     sessionDock_->setMinimumWidth(220);
     sessionDock_->setMaximumWidth(480);
     addDockWidget(Qt::LeftDockWidgetArea, sessionDock_);
+
     connect(sessionTree_, &SessionTreeWidget::openSession,
             this, &MainWindow::onOpenSession);
 }
 
 void MainWindow::initCommandWindow() {
     commandWindowDock_ = new QDockWidget(tr("Command Window"), this);
-    commandEditor_ = new QTextEdit(this);
-    commandWindowDock_->setWidget(commandEditor_);
+    commandWindow_ = new CommandWindow(this);
+    commandWindowDock_->setWidget(commandWindow_);
     commandWindowDock_->setFeatures(QDockWidget::NoDockWidgetFeatures);
-    commandEditor_->setMinimumHeight(50);
     addDockWidget(Qt::BottomDockWidgetArea, commandWindowDock_);
-    resizeDocks({commandWindowDock_}, {50}, Qt::Vertical);
-    commandEditor_->installEventFilter(this);
+    resizeDocks({commandWindowDock_}, {80}, Qt::Vertical);
 
-    //disable title bar
+    // 隐藏标题栏
     QWidget *titleBar = commandWindowDock_->titleBarWidget();
     auto *emptyWidget = new QWidget();
     commandWindowDock_->setTitleBarWidget(emptyWidget);
@@ -106,34 +112,31 @@ void MainWindow::initButtonBar() {
     addToolBar(Qt::BottomToolBarArea, commandButtonBar_);
 }
 
+void MainWindow::initMenuBar() {
+    // 在菜单栏添加历史记录相关菜单
+    QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
+
+    QAction *viewHistoryAction = editMenu->addAction(tr("View Command History..."));
+    viewHistoryAction->setShortcut(QKeySequence("Ctrl+Shift+H"));
+    connect(viewHistoryAction, &QAction::triggered,
+            commandWindow_, &CommandWindow::showHistoryDialog);
+
+    QAction *clearHistoryAction = editMenu->addAction(tr("Clear Command History"));
+    connect(clearHistoryAction, &QAction::triggered,
+            commandWindow_, &CommandWindow::clearHistory);
+}
+
 void MainWindow::onTabChanged(int index) {
     qDebug() << "onTabChanged, index = " << index;
+
     if (index < 0) {
-        // _connectAction->setEnabled(false);
-        // _disConnectAction->setEnabled(false);
-        // _toggleSaveLogAction->setEnabled(false);
-        // _toggleSaveHexLogAction->setEnabled(false);
         currentTab_ = nullptr;
+        commandWindow_->setCurrentTerminal(nullptr);
         return;
     }
 
     currentTab_ = dynamic_cast<BaseTerminal *>(tabWidget_->widget(index));
-    // if (_currentTab->isConnect()) {
-    //     _connectAction->setEnabled(false);
-    //     _disConnectAction->setEnabled(true);
-    // } else {
-    //     _connectAction->setEnabled(true);
-    //     _disConnectAction->setEnabled(false);
-    // }
-
-    // _toggleSaveLogAction->setEnabled(true);
-    // _toggleSaveHexLogAction->setEnabled(true);
-    // if (_currentTab->isLoggingSession()) {
-    //     _toggleSaveLogAction->setIcon(*_toggleOnIcon);
-    // } else {
-    //     _toggleSaveLogAction->setIcon(*_toggleOffIcon);
-    // }
-
+    commandWindow_->setCurrentTerminal(currentTab_);
 }
 
 void MainWindow::onTabCloseRequested(int index) const {
@@ -149,10 +152,5 @@ void MainWindow::onDisconnectAction() const {
     }
 
     currentTab_->disconnect();
-    if (!currentTab_->isConnect()) {
-        // _connectAction->setEnabled(true);
-        // _disConnectAction->setEnabled(false);
-    }
-
     tabWidget_->setTabIcon(tabWidget_->currentIndex(), *disconnectStateIcon_);
 }
