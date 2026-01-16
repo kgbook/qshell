@@ -89,7 +89,7 @@ void SSHTerminal::connect() {
         QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
     }
 
-    if (isInRemoteServer()) {
+    if (localShell_->hasChildProcess()) {
         qDebug() << "connect server success";
         connect_ = true;
     } else {
@@ -103,14 +103,4 @@ void SSHTerminal::disconnect() {
         return;
     }
     connect_ = false;
-}
-
-/*******************************************************************************
- 1. @函数:    isInRemoteServer
- 2. @作者:    ut000610 daizhengwen
- 3. @日期:    2020-08-11
- 4. @说明:    是否在远程服务器中
-*******************************************************************************/
-bool SSHTerminal::isInRemoteServer() const {
-    return localShell_->hasChildProcess();
 }
