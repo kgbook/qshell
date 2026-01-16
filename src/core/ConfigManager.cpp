@@ -7,13 +7,13 @@
 #include <QJsonArray>
 #include <algorithm>
 
-ConfigManager* ConfigManager::m_instance = nullptr;
+ConfigManager* ConfigManager::instance_ = nullptr;
 
 ConfigManager* ConfigManager::instance() {
-    if (!m_instance) {
-        m_instance = new ConfigManager();
+    if (!instance_) {
+        instance_ = new ConfigManager();
     }
-    return m_instance;
+    return instance_;
 }
 
 ConfigManager::ConfigManager(QObject* parent)
@@ -46,42 +46,42 @@ bool ConfigManager::load() {
     QJsonObject root = doc.object();
 
     // 加载分组
-    m_groups.clear();
+    groups_.clear();
     QJsonArray groupsArray = root["groups"].toArray();
     for (const auto& val : groupsArray) {
         GroupData group = GroupData::fromJson(val.toObject());
-        m_groups[group.id] = group;
+        groups_[group.id] = group;
     }
 
     // 加载会话
-    m_sessions.clear();
+    sessions_.clear();
     QJsonArray sessionsArray = root["sessions"].toArray();
     for (const auto& val : sessionsArray) {
         SessionData session = SessionData::fromJson(val.toObject());
         // 解密敏感信息
         session.sshConfig.password = CryptoHelper::decrypt(session.sshConfig.password);
         session.sshConfig.passphrase = CryptoHelper::decrypt(session.sshConfig.passphrase);
-        m_sessions[session.id] = session;
+        sessions_[session.id] = session;
     }
 
     // 加载按钮分组
-    m_buttonGroups.clear();
+    buttonGroups_.clear();
     QJsonArray btnGroupsArray = root["buttonGroups"].toArray();
     for (const auto& val : btnGroupsArray) {
         ButtonGroup group = ButtonGroup::fromJson(val.toObject());
-        m_buttonGroups[group.id] = group;
+        buttonGroups_[group.id] = group;
     }
 
     // 加载快捷按钮
-    m_quickButtons.clear();
+    quickButtons_.clear();
     QJsonArray buttonsArray = root["quickButtons"].toArray();
     for (const auto& val : buttonsArray) {
         QuickButton btn = QuickButton::fromJson(val.toObject());
-        m_quickButtons[btn.id] = btn;
+        quickButtons_[btn.id] = btn;
     }
 
     // 加载全局设置
-    m_globalSettings = GlobalSettings::fromJson(root["globalSettings"].toObject());
+    globalSettings_ = GlobalSettings::fromJson(root["globalSettings"].toObject());
 
     return true;
 }
@@ -124,7 +124,7 @@ bool ConfigManager::save() {
     root["quickButtons"] = buttonsArray;
 
     // 保存全局设置
-    root["globalSettings"] = m_globalSettings.toJson();
+    root["globalSettings"] = globalSettings_.toJson();
 
     QFile file(configFilePath());
     if (!file.open(QIODevice::WriteOnly)) {
@@ -141,13 +141,13 @@ bool ConfigManager::save() {
 // ==================== 会话管理 ====================
 
 QList<SessionData> ConfigManager::sessions() const {
-    QList<SessionData> result = m_sessions.values();
+    QList<SessionData> result = sessions_.values();
     std::sort(result.begin(), result.end());
     return result;
 }
 
 SessionData ConfigManager::session(const QString& id) const {
-    return m_sessions.value(id);
+    return sessions_.value(id);
 }
 
 void ConfigManager::addSession(const SessionData& session) {
@@ -155,20 +155,20 @@ void ConfigManager::addSession(const SessionData& session) {
     if (newSession.sortOrder == 0) {
         newSession.sortOrder = nextSessionSortOrder(newSession.groupId);
     }
-    m_sessions[newSession.id] = newSession;
+    sessions_[newSession.id] = newSession;
     emit sessionTreeUpdated();
     save();
 }
 
 void ConfigManager::updateSession(const SessionData& session) {
-    m_sessions[session.id] = session;
+    sessions_[session.id] = session;
     emit sessionTreeUpdated();
     save();
 }
 
 void ConfigManager::removeSession(const QString& id) {
-    QString groupId = m_sessions.value(id).groupId;
-    m_sessions.remove(id);
+    QString groupId = sessions_.value(id).groupId;
+    sessions_.remove(id);
     normalizeSessionSortOrders(groupId);
     emit sessionTreeUpdated();
     save();
@@ -176,7 +176,7 @@ void ConfigManager::removeSession(const QString& id) {
 
 QList<SessionData> ConfigManager::sessionsByGroup(const QString& groupId) const {
     QList<SessionData> result;
-    for (const auto& session : m_sessions) {
+    for (const auto& session : sessions_) {
         if (session.groupId == groupId) {
             result.append(session);
         }
@@ -187,7 +187,7 @@ QList<SessionData> ConfigManager::sessionsByGroup(const QString& groupId) const 
 
 int ConfigManager::nextSessionSortOrder(const QString& groupId) const {
     int maxOrder = -1;
-    for (const auto& session : m_sessions) {
+    for (const auto& session : sessions_) {
         if (session.groupId == groupId && session.sortOrder > maxOrder) {
             maxOrder = session.sortOrder;
         }
@@ -198,16 +198,16 @@ int ConfigManager::nextSessionSortOrder(const QString& groupId) const {
 void ConfigManager::normalizeSessionSortOrders(const QString& groupId) {
     QList<SessionData> groupSessions = sessionsByGroup(groupId);
     for (int i = 0; i < groupSessions.size(); ++i) {
-        if (m_sessions.contains(groupSessions[i].id)) {
-            m_sessions[groupSessions[i].id].sortOrder = i;
+        if (sessions_.contains(groupSessions[i].id)) {
+            sessions_[groupSessions[i].id].sortOrder = i;
         }
     }
 }
 
 void ConfigManager::moveSessionUp(const QString& id) {
-    if (!m_sessions.contains(id)) return;
+    if (!sessions_.contains(id)) return;
 
-    SessionData& session = m_sessions[id];
+    SessionData& session = sessions_[id];
     QList<SessionData> groupSessions = sessionsByGroup(session.groupId);
 
     int currentIndex = -1;
@@ -221,9 +221,9 @@ void ConfigManager::moveSessionUp(const QString& id) {
     if (currentIndex > 0) {
         // 交换排序号
         QString prevId = groupSessions[currentIndex - 1].id;
-        int tempOrder = m_sessions[id].sortOrder;
-        m_sessions[id].sortOrder = m_sessions[prevId].sortOrder;
-        m_sessions[prevId].sortOrder = tempOrder;
+        int tempOrder = sessions_[id].sortOrder;
+        sessions_[id].sortOrder = sessions_[prevId].sortOrder;
+        sessions_[prevId].sortOrder = tempOrder;
 
         emit sessionTreeUpdated();
         save();
@@ -231,9 +231,9 @@ void ConfigManager::moveSessionUp(const QString& id) {
 }
 
 void ConfigManager::moveSessionDown(const QString& id) {
-    if (!m_sessions.contains(id)) return;
+    if (!sessions_.contains(id)) return;
 
-    SessionData& session = m_sessions[id];
+    SessionData& session = sessions_[id];
     QList<SessionData> groupSessions = sessionsByGroup(session.groupId);
 
     int currentIndex = -1;
@@ -247,9 +247,9 @@ void ConfigManager::moveSessionDown(const QString& id) {
     if (currentIndex >= 0 && currentIndex < groupSessions.size() - 1) {
         // 交换排序号
         QString nextId = groupSessions[currentIndex + 1].id;
-        int tempOrder = m_sessions[id].sortOrder;
-        m_sessions[id].sortOrder = m_sessions[nextId].sortOrder;
-        m_sessions[nextId].sortOrder = tempOrder;
+        int tempOrder = sessions_[id].sortOrder;
+        sessions_[id].sortOrder = sessions_[nextId].sortOrder;
+        sessions_[nextId].sortOrder = tempOrder;
 
         emit sessionTreeUpdated();
         save();
@@ -257,9 +257,9 @@ void ConfigManager::moveSessionDown(const QString& id) {
 }
 
 void ConfigManager::moveSessionToIndex(const QString& id, int newIndex) {
-    if (!m_sessions.contains(id)) return;
+    if (!sessions_.contains(id)) return;
 
-    QString groupId = m_sessions[id].groupId;
+    QString groupId = sessions_[id].groupId;
     QList<SessionData> groupSessions = sessionsByGroup(groupId);
 
     int currentIndex = -1;
@@ -279,7 +279,7 @@ void ConfigManager::moveSessionToIndex(const QString& id, int newIndex) {
 
     // 更新所有排序号
     for (int i = 0; i < groupSessions.size(); ++i) {
-        m_sessions[groupSessions[i].id].sortOrder = i;
+        sessions_[groupSessions[i].id].sortOrder = i;
     }
 
     emit sessionTreeUpdated();
@@ -288,8 +288,8 @@ void ConfigManager::moveSessionToIndex(const QString& id, int newIndex) {
 
 void ConfigManager::reorderSessions(const QStringList& sessionIds) {
     for (int i = 0; i < sessionIds.size(); ++i) {
-        if (m_sessions.contains(sessionIds[i])) {
-            m_sessions[sessionIds[i]].sortOrder = i;
+        if (sessions_.contains(sessionIds[i])) {
+            sessions_[sessionIds[i]].sortOrder = i;
         }
     }
     emit sessionTreeUpdated();
@@ -299,40 +299,40 @@ void ConfigManager::reorderSessions(const QStringList& sessionIds) {
 // ==================== 分组管理 ====================
 
 QList<GroupData> ConfigManager::groups() const {
-    QList<GroupData> result = m_groups.values();
+    QList<GroupData> result = groups_.values();
     std::sort(result.begin(), result.end());
     return result;
 }
 
 GroupData ConfigManager::group(const QString& id) const {
-    return m_groups.value(id);
+    return groups_.value(id);
 }
 
 void ConfigManager::addGroup(const GroupData& group) {
     GroupData newGroup = group;
-    if (newGroup.sortOrder == 0 && !m_groups.isEmpty()) {
+    if (newGroup.sortOrder == 0 && !groups_.isEmpty()) {
         newGroup.sortOrder = nextGroupSortOrder();
     }
-    m_groups[newGroup.id] = newGroup;
+    groups_[newGroup.id] = newGroup;
     emit sessionTreeUpdated();
     save();
 }
 
 void ConfigManager::updateGroup(const GroupData& group) {
-    m_groups[group.id] = group;
+    groups_[group.id] = group;
     emit sessionTreeUpdated();
     save();
 }
 
 void ConfigManager::removeGroup(const QString& id) {
-    m_groups.remove(id);
+    groups_.remove(id);
     normalizeGroupSortOrders();
     emit sessionTreeUpdated();
     save();
 }
 
 bool ConfigManager::isGroupEmpty(const QString& groupId) const {
-    for (const auto& session : m_sessions) {
+    for (const auto& session : sessions_) {
         if (session.groupId == groupId) {
             return false;
         }
@@ -342,7 +342,7 @@ bool ConfigManager::isGroupEmpty(const QString& groupId) const {
 
 int ConfigManager::nextGroupSortOrder() const {
     int maxOrder = -1;
-    for (const auto& group : m_groups) {
+    for (const auto& group : groups_) {
         if (group.sortOrder > maxOrder) {
             maxOrder = group.sortOrder;
         }
@@ -353,14 +353,14 @@ int ConfigManager::nextGroupSortOrder() const {
 void ConfigManager::normalizeGroupSortOrders() {
     QList<GroupData> sortedGroups = groups();
     for (int i = 0; i < sortedGroups.size(); ++i) {
-        if (m_groups.contains(sortedGroups[i].id)) {
-            m_groups[sortedGroups[i].id].sortOrder = i;
+        if (groups_.contains(sortedGroups[i].id)) {
+            groups_[sortedGroups[i].id].sortOrder = i;
         }
     }
 }
 
 void ConfigManager::moveGroupUp(const QString& id) {
-    if (!m_groups.contains(id)) return;
+    if (!groups_.contains(id)) return;
 
     QList<GroupData> sortedGroups = groups();
 
@@ -374,9 +374,9 @@ void ConfigManager::moveGroupUp(const QString& id) {
 
     if (currentIndex > 0) {
         QString prevId = sortedGroups[currentIndex - 1].id;
-        int tempOrder = m_groups[id].sortOrder;
-        m_groups[id].sortOrder = m_groups[prevId].sortOrder;
-        m_groups[prevId].sortOrder = tempOrder;
+        int tempOrder = groups_[id].sortOrder;
+        groups_[id].sortOrder = groups_[prevId].sortOrder;
+        groups_[prevId].sortOrder = tempOrder;
 
         emit sessionTreeUpdated();
         save();
@@ -384,7 +384,7 @@ void ConfigManager::moveGroupUp(const QString& id) {
 }
 
 void ConfigManager::moveGroupDown(const QString& id) {
-    if (!m_groups.contains(id)) return;
+    if (!groups_.contains(id)) return;
 
     QList<GroupData> sortedGroups = groups();
 
@@ -398,9 +398,9 @@ void ConfigManager::moveGroupDown(const QString& id) {
 
     if (currentIndex >= 0 && currentIndex < sortedGroups.size() - 1) {
         QString nextId = sortedGroups[currentIndex + 1].id;
-        int tempOrder = m_groups[id].sortOrder;
-        m_groups[id].sortOrder = m_groups[nextId].sortOrder;
-        m_groups[nextId].sortOrder = tempOrder;
+        int tempOrder = groups_[id].sortOrder;
+        groups_[id].sortOrder = groups_[nextId].sortOrder;
+        groups_[nextId].sortOrder = tempOrder;
 
         emit sessionTreeUpdated();
         save();
@@ -408,7 +408,7 @@ void ConfigManager::moveGroupDown(const QString& id) {
 }
 
 void ConfigManager::moveGroupToIndex(const QString& id, int newIndex) {
-    if (!m_groups.contains(id)) return;
+    if (!groups_.contains(id)) return;
 
     QList<GroupData> sortedGroups = groups();
 
@@ -427,7 +427,7 @@ void ConfigManager::moveGroupToIndex(const QString& id, int newIndex) {
     sortedGroups.insert(newIndex, movedGroup);
 
     for (int i = 0; i < sortedGroups.size(); ++i) {
-        m_groups[sortedGroups[i].id].sortOrder = i;
+        groups_[sortedGroups[i].id].sortOrder = i;
     }
 
     emit sessionTreeUpdated();
@@ -436,8 +436,8 @@ void ConfigManager::moveGroupToIndex(const QString& id, int newIndex) {
 
 void ConfigManager::reorderGroups(const QStringList& groupIds) {
     for (int i = 0; i < groupIds.size(); ++i) {
-        if (m_groups.contains(groupIds[i])) {
-            m_groups[groupIds[i]].sortOrder = i;
+        if (groups_.contains(groupIds[i])) {
+            groups_[groupIds[i]].sortOrder = i;
         }
     }
     emit sessionTreeUpdated();
@@ -447,42 +447,42 @@ void ConfigManager::reorderGroups(const QStringList& groupIds) {
 // ==================== 按钮分组管理 ====================
 
 QList<ButtonGroup> ConfigManager::buttonGroups() const {
-    QList<ButtonGroup> result = m_buttonGroups.values();
+    QList<ButtonGroup> result = buttonGroups_.values();
     std::sort(result.begin(), result.end());
     return result;
 }
 
 ButtonGroup ConfigManager::buttonGroup(const QString& id) const {
-    return m_buttonGroups.value(id);
+    return buttonGroups_.value(id);
 }
 
 void ConfigManager::addButtonGroup(const ButtonGroup& group) {
     ButtonGroup newGroup = group;
-    if (newGroup.sortOrder == 0 && !m_buttonGroups.isEmpty()) {
+    if (newGroup.sortOrder == 0 && !buttonGroups_.isEmpty()) {
         newGroup.sortOrder = nextButtonGroupSortOrder();
     }
-    m_buttonGroups[newGroup.id] = newGroup;
+    buttonGroups_[newGroup.id] = newGroup;
     emit buttonGroupsChanged();
     save();
 }
 
 void ConfigManager::updateButtonGroup(const ButtonGroup& group) {
-    m_buttonGroups[group.id] = group;
+    buttonGroups_[group.id] = group;
     emit buttonGroupsChanged();
     save();
 }
 
 void ConfigManager::removeButtonGroup(const QString& id) {
-    m_buttonGroups.remove(id);
+    buttonGroups_.remove(id);
     // 同时删除该分组下的所有按钮
     QStringList toRemove;
-    for (const auto& btn : m_quickButtons) {
+    for (const auto& btn : quickButtons_) {
         if (btn.groupId == id) {
             toRemove.append(btn.id);
         }
     }
     for (const auto& btnId : toRemove) {
-        m_quickButtons.remove(btnId);
+        quickButtons_.remove(btnId);
     }
     normalizeButtonGroupSortOrders();
     emit buttonGroupsChanged();
@@ -492,7 +492,7 @@ void ConfigManager::removeButtonGroup(const QString& id) {
 
 int ConfigManager::nextButtonGroupSortOrder() const {
     int maxOrder = -1;
-    for (const auto& group : m_buttonGroups) {
+    for (const auto& group : buttonGroups_) {
         if (group.sortOrder > maxOrder) {
             maxOrder = group.sortOrder;
         }
@@ -503,14 +503,14 @@ int ConfigManager::nextButtonGroupSortOrder() const {
 void ConfigManager::normalizeButtonGroupSortOrders() {
     QList<ButtonGroup> sorted = buttonGroups();
     for (int i = 0; i < sorted.size(); ++i) {
-        if (m_buttonGroups.contains(sorted[i].id)) {
-            m_buttonGroups[sorted[i].id].sortOrder = i;
+        if (buttonGroups_.contains(sorted[i].id)) {
+            buttonGroups_[sorted[i].id].sortOrder = i;
         }
     }
 }
 
 void ConfigManager::moveButtonGroupUp(const QString& id) {
-    if (!m_buttonGroups.contains(id)) return;
+    if (!buttonGroups_.contains(id)) return;
 
     QList<ButtonGroup> sorted = buttonGroups();
 
@@ -524,9 +524,9 @@ void ConfigManager::moveButtonGroupUp(const QString& id) {
 
     if (currentIndex > 0) {
         QString prevId = sorted[currentIndex - 1].id;
-        int tempOrder = m_buttonGroups[id].sortOrder;
-        m_buttonGroups[id].sortOrder = m_buttonGroups[prevId].sortOrder;
-        m_buttonGroups[prevId].sortOrder = tempOrder;
+        int tempOrder = buttonGroups_[id].sortOrder;
+        buttonGroups_[id].sortOrder = buttonGroups_[prevId].sortOrder;
+        buttonGroups_[prevId].sortOrder = tempOrder;
 
         emit buttonGroupsChanged();
         save();
@@ -534,7 +534,7 @@ void ConfigManager::moveButtonGroupUp(const QString& id) {
 }
 
 void ConfigManager::moveButtonGroupDown(const QString& id) {
-    if (!m_buttonGroups.contains(id)) return;
+    if (!buttonGroups_.contains(id)) return;
 
     QList<ButtonGroup> sorted = buttonGroups();
 
@@ -548,9 +548,9 @@ void ConfigManager::moveButtonGroupDown(const QString& id) {
 
     if (currentIndex >= 0 && currentIndex < sorted.size() - 1) {
         QString nextId = sorted[currentIndex + 1].id;
-        int tempOrder = m_buttonGroups[id].sortOrder;
-        m_buttonGroups[id].sortOrder = m_buttonGroups[nextId].sortOrder;
-        m_buttonGroups[nextId].sortOrder = tempOrder;
+        int tempOrder = buttonGroups_[id].sortOrder;
+        buttonGroups_[id].sortOrder = buttonGroups_[nextId].sortOrder;
+        buttonGroups_[nextId].sortOrder = tempOrder;
 
         emit buttonGroupsChanged();
         save();
@@ -558,7 +558,7 @@ void ConfigManager::moveButtonGroupDown(const QString& id) {
 }
 
 void ConfigManager::moveButtonGroupToIndex(const QString& id, int newIndex) {
-    if (!m_buttonGroups.contains(id)) return;
+    if (!buttonGroups_.contains(id)) return;
 
     QList<ButtonGroup> sorted = buttonGroups();
 
@@ -577,7 +577,7 @@ void ConfigManager::moveButtonGroupToIndex(const QString& id, int newIndex) {
     sorted.insert(newIndex, moved);
 
     for (int i = 0; i < sorted.size(); ++i) {
-        m_buttonGroups[sorted[i].id].sortOrder = i;
+        buttonGroups_[sorted[i].id].sortOrder = i;
     }
 
     emit buttonGroupsChanged();
@@ -586,8 +586,8 @@ void ConfigManager::moveButtonGroupToIndex(const QString& id, int newIndex) {
 
 void ConfigManager::reorderButtonGroups(const QStringList& groupIds) {
     for (int i = 0; i < groupIds.size(); ++i) {
-        if (m_buttonGroups.contains(groupIds[i])) {
-            m_buttonGroups[groupIds[i]].sortOrder = i;
+        if (buttonGroups_.contains(groupIds[i])) {
+            buttonGroups_[groupIds[i]].sortOrder = i;
         }
     }
     emit buttonGroupsChanged();
@@ -597,14 +597,14 @@ void ConfigManager::reorderButtonGroups(const QStringList& groupIds) {
 // ==================== 快捷按钮管理 ====================
 
 QList<QuickButton> ConfigManager::quickButtons() const {
-    QList<QuickButton> result = m_quickButtons.values();
+    QList<QuickButton> result = quickButtons_.values();
     std::sort(result.begin(), result.end());
     return result;
 }
 
 QList<QuickButton> ConfigManager::quickButtonsByGroup(const QString& groupId) const {
     QList<QuickButton> result;
-    for (const auto& btn : m_quickButtons) {
+    for (const auto& btn : quickButtons_) {
         if (btn.groupId == groupId) {
             result.append(btn);
         }
@@ -614,7 +614,7 @@ QList<QuickButton> ConfigManager::quickButtonsByGroup(const QString& groupId) co
 }
 
 QuickButton ConfigManager::quickButton(const QString& id) const {
-    return m_quickButtons.value(id);
+    return quickButtons_.value(id);
 }
 
 void ConfigManager::addQuickButton(const QuickButton& button) {
@@ -622,20 +622,20 @@ void ConfigManager::addQuickButton(const QuickButton& button) {
     if (newButton.sortOrder == 0) {
         newButton.sortOrder = nextQuickButtonSortOrder(newButton.groupId);
     }
-    m_quickButtons[newButton.id] = newButton;
+    quickButtons_[newButton.id] = newButton;
     emit quickButtonsChanged();
     save();
 }
 
 void ConfigManager::updateQuickButton(const QuickButton& button) {
-    m_quickButtons[button.id] = button;
+    quickButtons_[button.id] = button;
     emit quickButtonsChanged();
     save();
 }
 
 void ConfigManager::removeQuickButton(const QString& id) {
-    QString groupId = m_quickButtons.value(id).groupId;
-    m_quickButtons.remove(id);
+    QString groupId = quickButtons_.value(id).groupId;
+    quickButtons_.remove(id);
     normalizeQuickButtonSortOrders(groupId);
     emit quickButtonsChanged();
     save();
@@ -643,7 +643,7 @@ void ConfigManager::removeQuickButton(const QString& id) {
 
 int ConfigManager::nextQuickButtonSortOrder(const QString& groupId) const {
     int maxOrder = -1;
-    for (const auto& btn : m_quickButtons) {
+    for (const auto& btn : quickButtons_) {
         if (btn.groupId == groupId && btn.sortOrder > maxOrder) {
             maxOrder = btn.sortOrder;
         }
@@ -654,16 +654,16 @@ int ConfigManager::nextQuickButtonSortOrder(const QString& groupId) const {
 void ConfigManager::normalizeQuickButtonSortOrders(const QString& groupId) {
     QList<QuickButton> groupButtons = quickButtonsByGroup(groupId);
     for (int i = 0; i < groupButtons.size(); ++i) {
-        if (m_quickButtons.contains(groupButtons[i].id)) {
-            m_quickButtons[groupButtons[i].id].sortOrder = i;
+        if (quickButtons_.contains(groupButtons[i].id)) {
+            quickButtons_[groupButtons[i].id].sortOrder = i;
         }
     }
 }
 
 void ConfigManager::moveQuickButtonUp(const QString& id) {
-    if (!m_quickButtons.contains(id)) return;
+    if (!quickButtons_.contains(id)) return;
 
-    QString groupId = m_quickButtons[id].groupId;
+    QString groupId = quickButtons_[id].groupId;
     QList<QuickButton> groupButtons = quickButtonsByGroup(groupId);
 
     int currentIndex = -1;
@@ -676,9 +676,9 @@ void ConfigManager::moveQuickButtonUp(const QString& id) {
 
     if (currentIndex > 0) {
         QString prevId = groupButtons[currentIndex - 1].id;
-        int tempOrder = m_quickButtons[id].sortOrder;
-        m_quickButtons[id].sortOrder = m_quickButtons[prevId].sortOrder;
-        m_quickButtons[prevId].sortOrder = tempOrder;
+        int tempOrder = quickButtons_[id].sortOrder;
+        quickButtons_[id].sortOrder = quickButtons_[prevId].sortOrder;
+        quickButtons_[prevId].sortOrder = tempOrder;
 
         emit quickButtonsChanged();
         save();
@@ -686,9 +686,9 @@ void ConfigManager::moveQuickButtonUp(const QString& id) {
 }
 
 void ConfigManager::moveQuickButtonDown(const QString& id) {
-    if (!m_quickButtons.contains(id)) return;
+    if (!quickButtons_.contains(id)) return;
 
-    QString groupId = m_quickButtons[id].groupId;
+    QString groupId = quickButtons_[id].groupId;
     QList<QuickButton> groupButtons = quickButtonsByGroup(groupId);
 
     int currentIndex = -1;
@@ -701,9 +701,9 @@ void ConfigManager::moveQuickButtonDown(const QString& id) {
 
     if (currentIndex >= 0 && currentIndex < groupButtons.size() - 1) {
         QString nextId = groupButtons[currentIndex + 1].id;
-        int tempOrder = m_quickButtons[id].sortOrder;
-        m_quickButtons[id].sortOrder = m_quickButtons[nextId].sortOrder;
-        m_quickButtons[nextId].sortOrder = tempOrder;
+        int tempOrder = quickButtons_[id].sortOrder;
+        quickButtons_[id].sortOrder = quickButtons_[nextId].sortOrder;
+        quickButtons_[nextId].sortOrder = tempOrder;
 
         emit quickButtonsChanged();
         save();
@@ -711,9 +711,9 @@ void ConfigManager::moveQuickButtonDown(const QString& id) {
 }
 
 void ConfigManager::moveQuickButtonToIndex(const QString& id, int newIndex) {
-    if (!m_quickButtons.contains(id)) return;
+    if (!quickButtons_.contains(id)) return;
 
-    QString groupId = m_quickButtons[id].groupId;
+    QString groupId = quickButtons_[id].groupId;
     QList<QuickButton> groupButtons = quickButtonsByGroup(groupId);
 
     int currentIndex = -1;
@@ -731,7 +731,7 @@ void ConfigManager::moveQuickButtonToIndex(const QString& id, int newIndex) {
     groupButtons.insert(newIndex, moved);
 
     for (int i = 0; i < groupButtons.size(); ++i) {
-        m_quickButtons[groupButtons[i].id].sortOrder = i;
+        quickButtons_[groupButtons[i].id].sortOrder = i;
     }
 
     emit quickButtonsChanged();
@@ -740,8 +740,8 @@ void ConfigManager::moveQuickButtonToIndex(const QString& id, int newIndex) {
 
 void ConfigManager::reorderQuickButtons(const QStringList& buttonIds) {
     for (int i = 0; i < buttonIds.size(); ++i) {
-        if (m_quickButtons.contains(buttonIds[i])) {
-            m_quickButtons[buttonIds[i]].sortOrder = i;
+        if (quickButtons_.contains(buttonIds[i])) {
+            quickButtons_[buttonIds[i]].sortOrder = i;
         }
     }
     emit quickButtonsChanged();
@@ -751,11 +751,11 @@ void ConfigManager::reorderQuickButtons(const QStringList& buttonIds) {
 // ==================== 全局设置 ====================
 
 GlobalSettings ConfigManager::globalSettings() const {
-    return m_globalSettings;
+    return globalSettings_;
 }
 
 void ConfigManager::setGlobalSettings(const GlobalSettings& settings) {
-    m_globalSettings = settings;
+    globalSettings_ = settings;
     emit globalSettingsChanged();
     save();
 }

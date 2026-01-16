@@ -1,5 +1,5 @@
-#ifndef KKSHELL_BASE_TERMINAL_H
-#define KKSHELL_BASE_TERMINAL_H
+#ifndef QSHELL_BASE_TERMINAL_H
+#define QSHELL_BASE_TERMINAL_H
 
 #include "qtermwidget.h"
 class IPtyProcess;
@@ -44,4 +44,4 @@ protected:
 };
 
 
-#endif //KKSHELL_BASE_TERMINAL_H
+#endif //QSHELL_BASE_TERMINAL_H

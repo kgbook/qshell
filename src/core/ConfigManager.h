@@ -83,8 +83,8 @@ signals:
     void globalSettingsChanged();
 
 private:
-    ConfigManager(QObject* parent = nullptr);
-    static ConfigManager* m_instance;
+    explicit ConfigManager(QObject* parent = nullptr);
+    static ConfigManager* instance_;
 
     // 辅助函数：获取下一个可用的排序号
     int nextSessionSortOrder(const QString& groupId) const;
@@ -98,11 +98,11 @@ private:
     void normalizeButtonGroupSortOrders();
     void normalizeQuickButtonSortOrders(const QString& groupId);
     
-    QMap<QString, SessionData> m_sessions;
-    QMap<QString, GroupData> m_groups;
-    QMap<QString, ButtonGroup> m_buttonGroups;
-    QMap<QString, QuickButton> m_quickButtons;
-    GlobalSettings m_globalSettings;
+    QMap<QString, SessionData> sessions_;
+    QMap<QString, GroupData> groups_;
+    QMap<QString, ButtonGroup> buttonGroups_;
+    QMap<QString, QuickButton> quickButtons_;
+    GlobalSettings globalSettings_;
 };
 
 #endif // CONFIGMANAGER_H

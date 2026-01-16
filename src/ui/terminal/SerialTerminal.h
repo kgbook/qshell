@@ -1,5 +1,5 @@
-#ifndef KKSHELL_SERIAL_TERMINAL_H
-#define KKSHELL_SERIAL_TERMINAL_H
+#ifndef QSHELL_SERIAL_TERMINAL_H
+#define QSHELL_SERIAL_TERMINAL_H
 
 #include <QtSerialPort/QSerialPort>
 #include "BaseTerminal.h"
@@ -19,4 +19,4 @@ private:
 };
 
 
-#endif //KKSHELL_SERIAL_TERMINAL_H
+#endif //QSHELL_SERIAL_TERMINAL_H

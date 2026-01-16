@@ -1,5 +1,5 @@
-#ifndef KKSHELL_SSH_TERMINAL_H
-#define KKSHELL_SSH_TERMINAL_H
+#ifndef QSHELL_SSH_TERMINAL_H
+#define QSHELL_SSH_TERMINAL_H
 
 #include <QDir>
 #include <QFile>
@@ -50,4 +50,4 @@ private:
 #endif
 };
 
-#endif //KKSHELL_SSH_TERMINAL_H
+#endif //QSHELL_SSH_TERMINAL_H

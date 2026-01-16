@@ -1,5 +1,5 @@
-#ifndef KKSHELL_LOCAL_TERMINAL_H
-#define KKSHELL_LOCAL_TERMINAL_H
+#ifndef QSHELL_LOCAL_TERMINAL_H
+#define QSHELL_LOCAL_TERMINAL_H
 
 #include "BaseTerminal.h"
 
@@ -15,4 +15,4 @@ public:
 };
 
 
-#endif //KKSHELL_LOCAL_TERMINAL_H
+#endif //QSHELL_LOCAL_TERMINAL_H
