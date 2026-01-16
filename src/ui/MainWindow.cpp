@@ -1,13 +1,13 @@
 #include "MainWindow.h"
-#include "button_toolbar/CommandButtonBar.h"
+#include "command/CommandButtonBar.h"
+#include "core/ConfigManager.h"
 #include "session/SessionTabWidget.h"
 #include "session/SessionTreeWidget.h"
-#include "core/ConfigManager.h"
+#include "ui/command/CommandWindow.h"
 #include "ui/terminal/BaseTerminal.h"
-#include "ui/terminal/SerialTerminal.h"
 #include "ui/terminal/LocalTerminal.h"
 #include "ui/terminal/SSHTerminal.h"
-#include "ui/command/CommandWindow.h"
+#include "ui/terminal/SerialTerminal.h"
 
 #include <QDockWidget>
 #include <QMenuBar>
@@ -114,7 +114,12 @@ void MainWindow::initButtonBar() {
     commandButtonBar_ = new CommandButtonBar(this);
     commandButtonBar_->setMovable(false);
     addToolBar(Qt::BottomToolBarArea, commandButtonBar_);
+
+    // 连接命令触发信号
+    connect(commandButtonBar_, &CommandButtonBar::commandTriggered,
+            this, &MainWindow::onCommandSend);
 }
+
 
 void MainWindow::initMenuBar() {
     // 在菜单栏添加历史记录相关菜单
