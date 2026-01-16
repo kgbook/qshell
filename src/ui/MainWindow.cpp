@@ -104,6 +104,10 @@ void MainWindow::initCommandWindow() {
     auto *emptyWidget = new QWidget();
     commandWindowDock_->setTitleBarWidget(emptyWidget);
     delete titleBar;
+
+    // 连接命令发送信号
+    connect(commandWindow_, &CommandWindow::commandSend,
+            this, &MainWindow::onCommandSend);
 }
 
 void MainWindow::initButtonBar() {
@@ -131,12 +135,10 @@ void MainWindow::onTabChanged(int index) {
 
     if (index < 0) {
         currentTab_ = nullptr;
-        commandWindow_->setCurrentTerminal(nullptr);
         return;
     }
 
     currentTab_ = dynamic_cast<BaseTerminal *>(tabWidget_->widget(index));
-    commandWindow_->setCurrentTerminal(currentTab_);
 }
 
 void MainWindow::onTabCloseRequested(int index) const {
@@ -153,4 +155,10 @@ void MainWindow::onDisconnectAction() const {
 
     currentTab_->disconnect();
     tabWidget_->setTabIcon(tabWidget_->currentIndex(), *disconnectStateIcon_);
+}
+
+void MainWindow::onCommandSend(const QString &command) {
+    if (currentTab_ != nullptr) {
+        currentTab_->sendText(command + "\r");
+    }
 }

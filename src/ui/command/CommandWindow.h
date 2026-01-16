@@ -7,8 +7,6 @@
 #include <QTextEdit>
 #include <QWidget>
 
-class BaseTerminal;
-
 class CommandWindow : public QWidget {
     Q_OBJECT
 
@@ -16,11 +14,10 @@ public:
     explicit CommandWindow(QWidget *parent = nullptr);
     ~CommandWindow() override;
 
-    void setCurrentTerminal(BaseTerminal *terminal);
     QWidget *widget() const;
 
-signals:
-    void commandSent(const QString &command);
+    signals:
+        void commandSend(const QString &command);
 
 public slots:
     void showHistoryDialog();
@@ -37,7 +34,6 @@ private:
     void setupContextMenu();
 
     QTextEdit *commandEditor_ = nullptr;
-    BaseTerminal *currentTerminal_ = nullptr;
 
     // 历史记录
     QStringList history_;

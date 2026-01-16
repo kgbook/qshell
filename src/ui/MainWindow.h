@@ -22,6 +22,7 @@ private slots:
     void onDisconnectAction() const;
     void onTabChanged(int index);
     void onTabCloseRequested(int index) const;
+    void onCommandSend(const QString &command);
 
 private:
     void initIcons();

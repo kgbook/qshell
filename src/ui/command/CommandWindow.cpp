@@ -1,6 +1,5 @@
 #include "CommandWindow.h"
 #include "CommandHistoryDialog.h"
-#include "ui/terminal/BaseTerminal.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -69,10 +68,6 @@ void CommandWindow::setupContextMenu() {
 
 QWidget *CommandWindow::widget() const {
     return commandEditor_;
-}
-
-void CommandWindow::setCurrentTerminal(BaseTerminal *terminal) {
-    currentTerminal_ = terminal;
 }
 
 void CommandWindow::loadHistory() {
@@ -238,12 +233,8 @@ bool CommandWindow::eventFilter(QObject *obj, QEvent *e) {
             if (!(event->modifiers() & Qt::ControlModifier)) {
                 QString command = commandEditor_->toPlainText();
 
-                if (currentTerminal_ != nullptr) {
-                    currentTerminal_->sendText(command + "\r");
-                }
-
                 addToHistory(command);
-                emit commandSent(command);
+                emit commandSend(command);
                 commandEditor_->clear();
                 return true;
             }
