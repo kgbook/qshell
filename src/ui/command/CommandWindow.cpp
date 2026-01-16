@@ -234,7 +234,7 @@ bool CommandWindow::eventFilter(QObject *obj, QEvent *e) {
                 QString command = commandEditor_->toPlainText();
 
                 addToHistory(command);
-                emit commandSend(command);
+                emit commandSend(command + "\r");
                 commandEditor_->clear();
                 return true;
             }

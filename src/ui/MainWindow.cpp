@@ -165,7 +165,9 @@ void MainWindow::onDisconnectAction() const {
 
 void MainWindow::onCommandSend(const QString &command) {
     if (currentTab_ != nullptr) {
-        currentTab_->sendText(command + "\r");
+        QString str = command;
+        str.replace(QString("\\r"), QString("\r"));
+        currentTab_->sendText(str);
     }
 }
 
