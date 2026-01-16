@@ -13,6 +13,7 @@ set(SRC_FILES main.cpp
         ui/terminal/BaseTerminal.cpp
         ui/terminal/SerialTerminal.cpp
         ui/terminal/LocalTerminal.cpp
+        ui/terminal/SSHTerminal.h
         ui/button_toolbar/CommandButtonBar.cpp )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
