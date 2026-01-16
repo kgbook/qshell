@@ -35,10 +35,10 @@ set(SRC_FILES
         qtermwidget.cpp
 )
 
-set(QRC_FILES res.qrc)
+set(QRC_FILES qtermwidget.qrc)
 set(QFORMS_FILES util/SearchBar.ui)
 
-add_library(qtermwidget SHARED
+add_library(qtermwidget
         ${SRC_FILES}
         ${SRC_HEADERS}
         ${QRC_FILES}

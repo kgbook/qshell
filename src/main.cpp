@@ -4,6 +4,7 @@
 
 int main(int argc, char *argv[])
 {
+    Q_INIT_RESOURCE(qtermwidget);
     QApplication a(argc, argv);
     qDebug() << "style list:" << QStyleFactory::keys();
     QApplication::setStyle(QStyleFactory::create("Fusion"));
