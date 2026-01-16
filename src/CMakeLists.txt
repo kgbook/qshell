@@ -57,3 +57,15 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
             COMMENT "Running windeployqt to copy DLLs..."
     )
 endif ()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
+install(TARGETS qshell
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(FILES resources/qshell.desktop
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications/)
+
+install(FILES resources/images/qshell.png
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps)
+endif ()

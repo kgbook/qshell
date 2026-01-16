@@ -2,7 +2,7 @@
 Version=1.0
 Type=Application
 Name=qshell
-Icon=/usr/share/icons/hicolor/128x128/apps/qshell.png
+Icon=qshell.png
 Exec=qshell
 Comment=qshell
 Categories=Development;IDE;
