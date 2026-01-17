@@ -82,6 +82,7 @@ QTermWidget::QTermWidget(QWidget *messageParentWidget, QWidget *parent)
     m_terminalDisplay->setObjectName("terminalDisplay");
     setMessageParentWidget(messageParentWidget?messageParentWidget:this);
 
+    connect(m_terminalDisplay, &TerminalDisplay::copyAvailable, this, &QTermWidget::selectionChanged);
     connect(m_terminalDisplay, &TerminalDisplay::notifyBell, this, &QTermWidget::notifyBell);
     connect(m_terminalDisplay, &TerminalDisplay::handleCtrlC, this, &QTermWidget::handleCtrlC);
     connect(m_terminalDisplay, &TerminalDisplay::changedContentCountSignal, this, &QTermWidget::termSizeChange);

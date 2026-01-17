@@ -147,6 +147,8 @@ void TerminalDisplay::setScreenWindow(ScreenWindow *window) {
                         &TerminalDisplay::scrollToEnd);
         connect(_screenWindow, &ScreenWindow::handleCtrlC, this,
                         &TerminalDisplay::handleCtrlC);
+        connect(_screenWindow, &ScreenWindow::selectionChanged, this,
+                        &TerminalDisplay::selectionChanged);
         window->setWindowLines(_lines);
     }
 }

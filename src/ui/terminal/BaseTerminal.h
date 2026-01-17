@@ -30,6 +30,7 @@ signals:
 protected:
     void onNewLine(const QString &line) const;
     void onHexData(const char *data, int len) const;
+    void onCopyAvailable(bool copyAvailable);
 
 protected:
     QFont *font_ = nullptr;

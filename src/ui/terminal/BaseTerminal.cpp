@@ -19,6 +19,7 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
     setTerminalSizeHint(false);
     setColorScheme(globalSettings.colorScheme);
     setScrollBarPosition(ScrollBarRight);
+    QObject::connect(this, &QTermWidget::copyAvailable, this, &BaseTerminal::onCopyAvailable);
 
     // QObject::connect(this, &QTermWidget::onNewLine, this, &BaseTerminal::onNewLine);
     // QObject::connect(this, &QTermWidget::receivedData, this, &BaseTerminal::onHexData);
@@ -142,6 +143,13 @@ void BaseTerminal::onHexData(const char *data, int len) const {
     if (loggingHex_) {
         fwrite(data, len, 1, logHexFp_);
     }
+}
+
+void BaseTerminal::onCopyAvailable(bool copyAvailable) {
+    if (copyAvailable) {
+        copyClipboard();
+    }
+
 }
 
 bool BaseTerminal::isLoggingHexSession() const {
