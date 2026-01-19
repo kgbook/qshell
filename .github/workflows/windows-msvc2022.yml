@@ -58,7 +58,7 @@ jobs:
         run: |
           # 使用 windeployqt 自动收集 Qt 依赖
           cd deploy
-          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw *.exe
+          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw qshell.exe
 
       - name: Copy additional dependencies
         if: startsWith(github.ref, 'refs/tags/')
