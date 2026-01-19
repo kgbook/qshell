@@ -9,6 +9,7 @@ SettingDialog::SettingDialog(QWidget *parent) :QDialog(parent) {
     fontFamilyEdit_->setCurrentText(config->globalSettings().fontFamily);
     fontSizeEdit_->setText(QString::number(config->globalSettings().fontSize));
     colorSchemeEdit_->setCurrentText(config->globalSettings().colorScheme);
+    copyOnSelectCheckBox_->setChecked(config->globalSettings().copyOnSelect);
 }
 
 SettingDialog::~SettingDialog() = default;
@@ -28,6 +29,10 @@ void SettingDialog::initWidgets() {
 
     colorSchemeEdit_ = new QComboBox(this);
     formLayout_->addRow(tr("Color Scheme:"), colorSchemeEdit_);
+
+    copyOnSelectCheckBox_ = new QCheckBox(this);
+    copyOnSelectCheckBox_->setToolTip(tr("Automatically copy selected text to clipboard"));
+    formLayout_->addRow(tr("Copy on Select:"), copyOnSelectCheckBox_);
 
     buttonLayout_ = new QHBoxLayout(this);
     mainLayout_->addLayout(buttonLayout_);
@@ -53,6 +58,7 @@ void SettingDialog::onOK() {
     settings.fontFamily = fontFamilyEdit_->currentText();
     settings.fontSize = fontSizeEdit_->text().toInt();
     settings.colorScheme = colorSchemeEdit_->currentText();
+    settings.copyOnSelect = copyOnSelectCheckBox_->isChecked();
     ConfigManager::instance()->setGlobalSettings(settings);
     close();
 }

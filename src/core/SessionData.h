@@ -275,12 +275,14 @@ struct GlobalSettings {
     QString fontFamily = "Consolas";
     int fontSize = 14;
     QString colorScheme = "Tango";
+    bool copyOnSelect = false;
 
     QJsonObject toJson() const {
         QJsonObject obj;
         obj["fontFamily"] = fontFamily;
         obj["fontSize"] = fontSize;
         obj["colorScheme"] = colorScheme;
+        obj["copyOnSelect"] = copyOnSelect;
         return obj;
     }
 
@@ -289,6 +291,7 @@ struct GlobalSettings {
         settings.fontFamily = obj["fontFamily"].toString("Consolas");
         settings.fontSize = obj["fontSize"].toInt(12);
         settings.colorScheme = obj["colorScheme"].toString("Tango");
+        settings.copyOnSelect = obj["copyOnSelect"].toBool();
         return settings;
     }
 };

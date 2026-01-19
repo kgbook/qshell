@@ -8,11 +8,12 @@
 #include <QComboBox>
 #include <QFontComboBox>
 #include <QVBoxLayout>
+#include <QCheckBox>
 
 
 class SettingDialog : public QDialog  {
-Q_OBJECT
-public:
+    Q_OBJECT
+    public:
     explicit SettingDialog(QWidget *parent);
     ~SettingDialog() override;
 
@@ -29,6 +30,7 @@ private:
     QFontComboBox *fontFamilyEdit_ = nullptr;
     QLineEdit *fontSizeEdit_ = nullptr;
     QComboBox *colorSchemeEdit_ = nullptr;
+    QCheckBox *copyOnSelectCheckBox_ = nullptr;
 
     QHBoxLayout *buttonLayout_ = nullptr;
     QPushButton *okButton_ = nullptr;

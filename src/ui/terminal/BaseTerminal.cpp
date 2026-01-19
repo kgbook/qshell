@@ -19,7 +19,9 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
     setTerminalSizeHint(false);
     setColorScheme(globalSettings.colorScheme);
     setScrollBarPosition(ScrollBarRight);
-    QObject::connect(this, &QTermWidget::copyAvailable, this, &BaseTerminal::onCopyAvailable);
+    if (globalSettings.copyOnSelect) {
+        QObject::connect(this, &QTermWidget::copyAvailable, this, &BaseTerminal::onCopyAvailable);
+    }
 
     // QObject::connect(this, &QTermWidget::onNewLine, this, &BaseTerminal::onNewLine);
     // QObject::connect(this, &QTermWidget::receivedData, this, &BaseTerminal::onHexData);
