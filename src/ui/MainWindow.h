@@ -25,8 +25,6 @@ private slots:
     void onCommandSend(const QString &command);
 
     void onSettingsAction();
-    void onToggleSaveLogAction();
-    void onToggleSaveHexLogAction();
     void onConnectAction();
     void onExitAction();
 
@@ -76,8 +74,6 @@ private:
     QIcon *toggleOffIcon_ = nullptr;
 
     QAction *settingsAction_ = nullptr;
-    QAction *toggleSaveLogAction_  = nullptr;
-    QAction *toggleSaveHexLogAction_ = nullptr;
     QAction *connectAction_ = nullptr;
     QAction *disConnectAction_ = nullptr;
     QAction *exitAction_ = nullptr;

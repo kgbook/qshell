@@ -176,14 +176,6 @@ void MainWindow::initActions() {
     settingsAction_ = new QAction(*settingsIcon_, tr("Setting"), this);
     connect(settingsAction_, &QAction::triggered, this, &MainWindow::onSettingsAction);
 
-    toggleSaveLogAction_ = new QAction(*toggleOffIcon_, tr("Save Session Log"), this);
-    toggleSaveLogAction_->setEnabled(false);
-    connect(toggleSaveLogAction_, &QAction::triggered, this, &MainWindow::onToggleSaveLogAction);
-
-    toggleSaveHexLogAction_ = new QAction(*toggleOffIcon_, tr("Save Session Hex Log"), this);
-    toggleSaveHexLogAction_->setEnabled(false);
-    connect(toggleSaveHexLogAction_, &QAction::triggered, this, &MainWindow::onToggleSaveHexLogAction);
-
     connectAction_ = new QAction(*connectIcon_, tr("Connect"), this);
     connectAction_->setEnabled(false);
     connect(connectAction_, &QAction::triggered, this, &MainWindow::onConnectAction);
@@ -236,8 +228,6 @@ void MainWindow::initMenu() {
     fileMenu_ = new QMenu(tr("File"), mainMenuBar_);
     mainMenuBar_->addAction(fileMenu_->menuAction());
     fileMenu_->addAction(settingsAction_);
-    fileMenu_->addAction(toggleSaveLogAction_);
-    fileMenu_->addAction(toggleSaveHexLogAction_);
     fileMenu_->addAction(connectAction_);
     fileMenu_->addAction(disConnectAction_);
     fileMenu_->addAction(exitAction_);
@@ -373,11 +363,4 @@ void MainWindow::onToggleCommandButtonAction() {
         commandButtonBar_->hide();
         toggleCommandButtonAction_->setIcon(*toggleOffIcon_);
     }
-}
-
-void MainWindow::onToggleSaveLogAction() {
-}
-
-void MainWindow::onToggleSaveHexLogAction() {
-
 }

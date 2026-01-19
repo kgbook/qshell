@@ -23,13 +23,11 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
         QObject::connect(this, &QTermWidget::copyAvailable, this, &BaseTerminal::onCopyAvailable);
     }
 
-    // QObject::connect(this, &QTermWidget::onNewLine, this, &BaseTerminal::onNewLine);
-    // QObject::connect(this, &QTermWidget::receivedData, this, &BaseTerminal::onHexData);
+    QObject::connect(this, &QTermWidget::dupDisplayOutput, this, &BaseTerminal::onDisplayOutput);
 }
 
-BaseTerminal::~BaseTerminal() {
-    disableLogSession();
-}
+BaseTerminal::~BaseTerminal() = default;
+
 void BaseTerminal::startLocalShell() {
     QString shellPath;
     QStringList args;
@@ -99,61 +97,12 @@ bool BaseTerminal::isConnect() const {
     return connect_;
 }
 
-void BaseTerminal::logSession(const std::string &logPath) {
-    logPath_ = logPath;
-    logFp_ = fopen(logPath.c_str(), "wb+");
-    logging_ = true;
-}
+void BaseTerminal::onDisplayOutput(const char *data, int len) const {
 
-void BaseTerminal::disableLogSession() {
-    logging_ = false;
-    if (logFp_) {
-        fflush(logFp_);
-        fclose(logFp_);
-        logFp_ = nullptr;
-    }
-}
-
-void BaseTerminal::onNewLine(const QString &line) const {
-    if (logging_) {
-        fwrite(line.toStdString().c_str(), line.toStdString().length(), 1, logFp_);
-        fwrite("\n", 1, 1, logFp_);
-    }
-}
-
-bool BaseTerminal::isLoggingSession() const {
-    return logging_;
-}
-
-
-void BaseTerminal::logHexSession(const std::string &logPath) {
-    logHexPath_ = logPath;
-    logHexFp_ = fopen(logPath.c_str(), "wb+");
-    loggingHex_ = true;
-}
-
-void BaseTerminal::disableLogHexSession() {
-    loggingHex_ = false;
-    if (logHexFp_) {
-        fflush(logHexFp_);
-        fclose(logHexFp_);
-        logHexFp_ = nullptr;
-    }
-}
-
-void BaseTerminal::onHexData(const char *data, int len) const {
-    if (loggingHex_) {
-        fwrite(data, len, 1, logHexFp_);
-    }
 }
 
 void BaseTerminal::onCopyAvailable(bool copyAvailable) {
     if (copyAvailable) {
         copyClipboard();
     }
-
-}
-
-bool BaseTerminal::isLoggingHexSession() const {
-    return loggingHex_;
 }
