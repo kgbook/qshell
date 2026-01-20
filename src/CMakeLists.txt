@@ -7,6 +7,7 @@ set(SRC_FILES main.cpp
         ui/SettingDialog.cpp
         core/CryptoHelper.cpp
         core/ConfigManager.cpp
+        ui/session/CollapsibleDockWidget.cpp
         ui/session/SessionTabWidget.cpp
         ui/session/SessionTreeWidget.cpp
         ui/session/SessionEditDialog.cpp

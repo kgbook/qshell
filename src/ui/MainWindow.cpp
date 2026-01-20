@@ -4,6 +4,7 @@
 #include "core/ConfigManager.h"
 #include "session/SessionTabWidget.h"
 #include "session/SessionTreeWidget.h"
+#include "session/CollapsibleDockWidget.h"
 #include "ui/command/CommandWindow.h"
 #include "ui/terminal/BaseTerminal.h"
 #include "ui/terminal/LocalTerminal.h"
@@ -95,13 +96,12 @@ void MainWindow::onSessionError(BaseTerminal *terminal) const {
 }
 
 void MainWindow::initSessionTree() {
-    sessionDock_ = new QDockWidget(tr("Session Manager"), this);
+    sessionDock_ = new CollapsibleDockWidget(this);
     sessionTree_ = new SessionTreeWidget(this);
     sessionDock_->setWidget(sessionTree_);
     sessionDock_->setFeatures(QDockWidget::DockWidgetMovable);
     sessionDock_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    sessionDock_->setMinimumWidth(220);
-    sessionDock_->setMaximumWidth(480);
+
     addDockWidget(Qt::LeftDockWidgetArea, sessionDock_);
 
     connect(sessionTree_, &SessionTreeWidget::openSession,
