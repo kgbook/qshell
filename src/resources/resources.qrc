@@ -26,5 +26,6 @@
     <file>images/exit.png</file>
     <file>images/category.png</file>
     <file>images/session.png</file>
+    <file>images/fullscreen.png</file>
   </qresource>
 </RCC>

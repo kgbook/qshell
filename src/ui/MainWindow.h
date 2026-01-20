@@ -2,6 +2,7 @@
 #define QSHELL_MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QShortcut>
 
 class SessionTabWidget;
 class SessionTreeWidget;
@@ -41,6 +42,8 @@ private slots:
     void onToggleCommandWindowAction();
     void onToggleCommandButtonAction();
 
+    void onFullscreenAction();
+
 private:
     void initIcons();
     void initActions();
@@ -51,6 +54,9 @@ private:
     void initCommandWindow();
     void initButtonBar();
     void restoreLayoutState();
+    void exitFullscreen();
+
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
     QIcon *connectIcon_ = nullptr;
     QIcon *disconnectIcon_ = nullptr;
@@ -76,6 +82,8 @@ private:
     QIcon *toggleOnIcon_ = nullptr;
     QIcon *toggleOffIcon_ = nullptr;
 
+    QIcon *fullscreenIcon_ = nullptr;
+
     QAction *settingsAction_ = nullptr;
     QAction *connectAction_ = nullptr;
     QAction *disConnectAction_ = nullptr;
@@ -92,6 +100,8 @@ private:
     QAction *toggleCommandWindowAction_ = nullptr;
     QAction *toggleCommandButtonAction_ = nullptr;
 
+    QAction *fullscreenAction_ = nullptr;
+
     // session table
     BaseTerminal *currentTab_ = nullptr;
     SessionTabWidget *tabWidget_ = nullptr;
@@ -107,6 +117,11 @@ private:
 
     // command button bar
     CommandButtonBar *commandButtonBar_ = nullptr;
+
+    // full screen
+    bool isFullscreen_ = false;
+    QWidget *fullscreenWidget_ = nullptr;
+    QShortcut *escShortcut_ = nullptr;
 };
 
 #endif // QSHELL_MAINWINDOW_H

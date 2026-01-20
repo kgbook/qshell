@@ -2,9 +2,9 @@
 #include "SettingDialog.h"
 #include "command/CommandButtonBar.h"
 #include "core/ConfigManager.h"
+#include "session/CollapsibleDockWidget.h"
 #include "session/SessionTabWidget.h"
 #include "session/SessionTreeWidget.h"
-#include "session/CollapsibleDockWidget.h"
 #include "ui/command/CommandWindow.h"
 #include "ui/terminal/BaseTerminal.h"
 #include "ui/terminal/LocalTerminal.h"
@@ -14,6 +14,7 @@
 #include <QApplication>
 #include <QDockWidget>
 #include <QFileDialog>
+#include <QKeyEvent>
 #include <QMenuBar>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -51,6 +52,8 @@ void MainWindow::initIcons() {
 
     toggleOnIcon_ = new QIcon(":/images/toggle_on.png");
     toggleOffIcon_ = new QIcon(":/images/toggle_off.png");
+
+    fullscreenIcon_ = new QIcon(":/images/fullscreen.png");
 }
 
 void MainWindow::initTableWidget() {
@@ -254,6 +257,10 @@ void MainWindow::initActions() {
 
     toggleCommandButtonAction_ = new QAction(*toggleOnIcon_, tr("Command Button"), this);
     connect(toggleCommandButtonAction_, &QAction::triggered, this, &MainWindow::onToggleCommandButtonAction);
+
+    fullscreenAction_ = new QAction(*fullscreenIcon_, tr("Fullscreen"), this);
+    fullscreenAction_->setShortcut(QApplication::translate("MainWindow", "F11", nullptr));
+    connect(fullscreenAction_, &QAction::triggered, this, &MainWindow::onFullscreenAction);
 }
 
 void MainWindow::initMenu() {
@@ -281,6 +288,8 @@ void MainWindow::initMenu() {
     viewMenu_->addAction(toggleSessionManagerAction_);
     viewMenu_->addAction(toggleCommandWindowAction_);
     viewMenu_->addAction(toggleCommandButtonAction_);
+    viewMenu_->addSeparator();
+    viewMenu_->addAction(fullscreenAction_);
 
     helpMenu_ = new QMenu(tr("Help"), mainMenuBar_);
     mainMenuBar_->addAction(helpMenu_->menuAction());
@@ -301,6 +310,11 @@ void MainWindow::initToolbar() {
     toolBar_->addSeparator();
     toolBar_->addAction(findAction_);
     toolBar_->addAction(clearScreenAction_);
+    // 添加弹性空白，将后面的控件推到右边
+    auto* spacer = new QWidget(this);
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    toolBar_->addWidget(spacer);
+    toolBar_->addAction(fullscreenAction_);
 }
 
 void MainWindow::onSettingsAction() {
@@ -402,4 +416,133 @@ void MainWindow::onToggleCommandButtonAction() {
         toggleCommandButtonAction_->setIcon(*toggleOffIcon_);
     }
     ConfigManager::instance()->showCommandButton(!commandButtonBar_->isHidden());
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
+    if (isFullscreen_ && watched == fullscreenWidget_ && event->type() == QEvent::KeyPress) {
+        auto *keyEvent = dynamic_cast<QKeyEvent *>(event);
+        if (keyEvent->key() == Qt::Key_Escape) {
+            exitFullscreen();
+            return true;
+        }
+        // F11 也可以退出全屏
+        if (keyEvent->key() == Qt::Key_F11) {
+            exitFullscreen();
+            return true;
+        }
+    }
+    return QMainWindow::eventFilter(watched, event);
+}
+
+void MainWindow::onFullscreenAction() {
+    if (currentTab_ == nullptr) {
+        return;
+    }
+
+    if (!isFullscreen_) {
+        isFullscreen_ = true;
+
+        BaseTerminal *terminal = currentTab_;
+        fullscreenWidget_ = terminal;
+
+        int index = tabWidget_->indexOf(terminal);
+        QString tabText = tabWidget_->tabText(index);
+        QIcon tabIcon = tabWidget_->tabIcon(index);
+
+        terminal->setProperty("tabIndex", index);
+        terminal->setProperty("tabText", tabText);
+        terminal->setProperty("tabIcon", tabIcon);
+
+        disconnect(tabWidget_, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
+        tabWidget_->removeTab(index);
+        connect(tabWidget_, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
+
+        terminal->setParent(nullptr);
+        terminal->setWindowFlags(Qt::Window);
+        terminal->showFullScreen();
+
+        // 创建退出全屏按钮
+        auto *exitBtn = new QPushButton(terminal);
+        exitBtn->setObjectName("exitFullscreenBtn");
+        exitBtn->setIcon(QIcon(":/images/fullscreen.png"));
+        exitBtn->setIconSize(QSize(24, 24));
+        exitBtn->setFixedSize(40, 40);
+        exitBtn->setToolTip(tr("Exit Fullscreen (Esc)"));
+        exitBtn->setCursor(Qt::PointingHandCursor);
+        exitBtn->setStyleSheet(
+                "QPushButton {"
+                "  background-color: rgba(60, 60, 60, 220);"  // 更高的不透明度
+                "  border: 2px solid rgba(255, 255, 255, 100);"  // 添加边框增加可见性
+                "  border-radius: 20px;"
+                "}"
+                "QPushButton:hover {"
+                "  background-color: rgba(100, 100, 100, 240);"
+                "}");
+
+        // 使用屏幕尺寸计算位置
+        QScreen *screen = terminal->screen();
+        if (screen) {
+            QRect screenGeometry = screen->geometry();
+            exitBtn->move(screenGeometry.width() - exitBtn->width() - 20, 20);
+        }
+
+        exitBtn->show();
+        exitBtn->raise();
+        connect(exitBtn, &QPushButton::clicked, this, &MainWindow::exitFullscreen);
+
+        escShortcut_ = new QShortcut(QKeySequence(Qt::Key_Escape), terminal);
+        escShortcut_->setContext(Qt::WindowShortcut);
+        connect(escShortcut_, &QShortcut::activated, this, &MainWindow::exitFullscreen);
+
+        terminal->setFocus();
+        currentTab_ = nullptr;
+    } else {
+        exitFullscreen();
+    }
+}
+
+
+void MainWindow::exitFullscreen() {
+    if (!isFullscreen_ || fullscreenWidget_ == nullptr) {
+        return;
+    }
+
+    auto *terminal = dynamic_cast<BaseTerminal *>(fullscreenWidget_);
+    if (terminal == nullptr) {
+        return;
+    }
+
+    int index = terminal->property("tabIndex").toInt();
+    QString tabText = terminal->property("tabText").toString();
+    auto tabIcon = terminal->property("tabIcon").value<QIcon>();
+
+    // 删除退出按钮
+    auto *exitBtn = terminal->findChild<QPushButton *>("exitFullscreenBtn");
+    delete exitBtn;
+
+    // 删除快捷键
+    if (escShortcut_) {
+        delete escShortcut_;
+        escShortcut_ = nullptr;
+    }
+
+    terminal->setWindowFlags(Qt::Widget);
+    terminal->showNormal();
+
+    disconnect(tabWidget_, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
+
+    if (index > tabWidget_->count()) {
+        index = tabWidget_->count();
+    }
+
+    tabWidget_->insertTab(index, terminal, tabIcon, tabText);
+    tabWidget_->setCurrentIndex(index);
+
+    connect(tabWidget_, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
+
+    currentTab_ = terminal;
+    currentTab_->setFocus();
+
+    isFullscreen_ = false;
+    fullscreenWidget_ = nullptr;
 }
