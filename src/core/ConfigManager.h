@@ -76,6 +76,16 @@ public:
     GlobalSettings globalSettings() const;
     void setGlobalSettings(const GlobalSettings& settings);
 
+    //ui 布局
+    void showToolBar(bool show);
+    void showSessions(bool show);
+    void showCommandWindow(bool show);
+    void showCommandButton(bool show);
+    void expendSessionDock(bool expend);
+    void setSessionDockWidth(int width);
+    void setCommandWindowHeight(int height);
+    WindowLayout getWindowLayout() const;
+
 signals:
     void sessionTreeUpdated();
     void buttonGroupsChanged();
@@ -103,6 +113,7 @@ private:
     QMap<QString, ButtonGroup> buttonGroups_;
     QMap<QString, QuickButton> quickButtons_;
     GlobalSettings globalSettings_;
+    WindowLayout windowLayout_{};
 };
 
 #endif // CONFIGMANAGER_H

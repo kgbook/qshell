@@ -83,6 +83,11 @@ bool ConfigManager::load() {
     // 加载全局设置
     globalSettings_ = GlobalSettings::fromJson(root["globalSettings"].toObject());
 
+    // 加载 ui 布局
+    if (root.contains("windowLayout")) {
+        windowLayout_ = WindowLayout::fromJson(root["windowLayout"].toObject());
+    }
+
     return true;
 }
 
@@ -125,6 +130,9 @@ bool ConfigManager::save() {
 
     // 保存全局设置
     root["globalSettings"] = globalSettings_.toJson();
+
+    //保存 ui 布局
+    root["windowLayout"] = windowLayout_.toJson();
 
     QFile file(configFilePath());
     if (!file.open(QIODevice::WriteOnly)) {
@@ -758,4 +766,44 @@ void ConfigManager::setGlobalSettings(const GlobalSettings& settings) {
     globalSettings_ = settings;
     emit globalSettingsChanged();
     save();
+}
+
+// ==================== ui 布局 ====================
+void ConfigManager::showToolBar(bool show) {
+    windowLayout_.showToolBar = show;
+    save();
+}
+
+void ConfigManager::showSessions(bool show) {
+    windowLayout_.showSessions = show;
+    save();
+}
+
+void ConfigManager::showCommandWindow(bool show) {
+    windowLayout_.showCommandWindow = show;
+    save();
+}
+
+void ConfigManager::showCommandButton(bool show) {
+    windowLayout_.showCommandButton = show;
+    save();
+}
+
+void ConfigManager::expendSessionDock(bool expend) {
+    windowLayout_.expendSessionDock = expend;
+    save();
+}
+
+void ConfigManager::setSessionDockWidth(int width) {
+    windowLayout_.sessionDockWidth = width;
+    save();
+}
+
+void ConfigManager::setCommandWindowHeight(int height) {
+    windowLayout_.commandWindowHeight = height;
+    save();
+}
+
+WindowLayout ConfigManager::getWindowLayout() const {
+    return windowLayout_;
 }

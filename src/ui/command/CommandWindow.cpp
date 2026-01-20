@@ -25,7 +25,7 @@ CommandWindow::CommandWindow(QWidget *parent)
 
     // 创建编辑器
     commandEditor_ = new QTextEdit(this);
-    commandEditor_->setMinimumHeight(50);
+    commandEditor_->setMinimumHeight(30);
     commandEditor_->setPlaceholderText(tr("Enter command here... (Press Enter to send, Ctrl+Enter for new line)"));
     commandEditor_->installEventFilter(this);
 

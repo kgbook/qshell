@@ -296,4 +296,38 @@ struct GlobalSettings {
     }
 };
 
+struct WindowLayout {
+    bool showToolBar = true;
+    bool showSessions = true;
+    bool showCommandWindow = true;
+    bool showCommandButton = true;
+    bool expendSessionDock = true;
+    int sessionDockWidth = 300;
+    int commandWindowHeight = 30;
+
+    QJsonObject toJson() const {
+        QJsonObject obj;
+        obj["showToolBar"] = showToolBar;
+        obj["showSessions"] = showSessions;
+        obj["showCommandWindow"] = showCommandWindow;
+        obj["showCommandButton"] = showCommandButton;
+        obj["expendSessionDock"] = expendSessionDock;
+        obj["sessionDockWidth"] = sessionDockWidth;
+        obj["commandWindowHeight"] = commandWindowHeight;
+        return obj;
+    }
+
+    static WindowLayout fromJson(const QJsonObject& obj) {
+        WindowLayout layout{};
+        layout.showToolBar = obj["showToolBar"].toBool();
+        layout.showSessions = obj["showSessions"].toBool();
+        layout.showCommandWindow = obj["showCommandWindow"].toBool();
+        layout.showCommandButton = obj["showCommandButton"].toBool();
+        layout.expendSessionDock = obj["expendSessionDock"].toBool();
+        layout.sessionDockWidth = obj["sessionDockWidth"].toInt();
+        layout.commandWindowHeight = obj["commandWindowHeight"].toInt();
+        return layout;
+    }
+};
+
 #endif // SESSIONDATA_H
