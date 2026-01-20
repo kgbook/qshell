@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     initSessionTree();
     initCommandWindow();
     initButtonBar();
+    restoreLayoutState();
 }
 
 void MainWindow::initIcons() {
@@ -60,6 +61,15 @@ void MainWindow::initTableWidget() {
 
     connect(tabWidget_, &QTabWidget::currentChanged, this, &MainWindow::onTabChanged);
     connect(tabWidget_, &QTabWidget::tabCloseRequested, this, &MainWindow::onTabCloseRequested);
+}
+
+void MainWindow::showEvent(QShowEvent *event) {
+    QMainWindow::showEvent(event);
+    static bool firstShow = true;
+    if (firstShow) {
+        firstShow = false;
+        QTimer::singleShot(100, this, &MainWindow::restoreLayoutState);
+    }
 }
 
 void MainWindow::onOpenSession(const QString &sessionId) {
@@ -98,11 +108,10 @@ void MainWindow::onSessionError(BaseTerminal *terminal) const {
 void MainWindow::initSessionTree() {
     sessionDock_ = new CollapsibleDockWidget(this);
     sessionTree_ = new SessionTreeWidget(this);
-    sessionDock_->setWidget(sessionTree_);
+    addDockWidget(Qt::LeftDockWidgetArea, sessionDock_);
+    sessionDock_->setContentWidget(sessionTree_);
     sessionDock_->setFeatures(QDockWidget::DockWidgetMovable);
     sessionDock_->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-
-    addDockWidget(Qt::LeftDockWidgetArea, sessionDock_);
 
     connect(sessionTree_, &SessionTreeWidget::openSession,
             this, &MainWindow::onOpenSession);
@@ -135,6 +144,32 @@ void MainWindow::initButtonBar() {
     // 连接命令触发信号
     connect(commandButtonBar_, &CommandButtonBar::commandTriggered,
             this, &MainWindow::onCommandSend);
+}
+
+void MainWindow::restoreLayoutState() {
+    auto config = ConfigManager::instance();
+    auto layout = config->getWindowLayout();
+    if (!layout.showToolBar) {
+        toolBar_->hide();
+        toggleToolbarAction_->setIcon(*toggleOffIcon_);
+    }
+
+    if (!layout.showSessions) {
+        sessionDock_->hide();
+        toggleSessionManagerAction_->setIcon(*toggleOffIcon_);
+    }
+
+    if (!layout.showCommandWindow) {
+        commandWindowDock_->hide();
+        toggleCommandWindowAction_->setIcon(*toggleOffIcon_);
+    }
+
+    if (!layout.showCommandButton) {
+        commandButtonBar_->hide();
+        toggleCommandButtonAction_->setIcon(*toggleOffIcon_);
+    }
+
+    resizeDocks({sessionDock_}, {300}, Qt::Horizontal);
 }
 
 void MainWindow::onTabChanged(int index) {
@@ -333,6 +368,7 @@ void MainWindow::onToggleToolbarAction() {
         toolBar_->hide();
         toggleToolbarAction_->setIcon(*toggleOffIcon_);
     }
+    ConfigManager::instance()->showToolBar(!toolBar_->isHidden());
 }
 
 void MainWindow::onToggleSessionManagerAction() {
@@ -343,6 +379,7 @@ void MainWindow::onToggleSessionManagerAction() {
         sessionDock_->hide();
         toggleSessionManagerAction_->setIcon(*toggleOffIcon_);
     }
+    ConfigManager::instance()->showSessions(!sessionDock_->isHidden());
 }
 
 void MainWindow::onToggleCommandWindowAction() {
@@ -353,6 +390,7 @@ void MainWindow::onToggleCommandWindowAction() {
         commandWindowDock_->hide();
         toggleCommandWindowAction_->setIcon(*toggleOffIcon_);
     }
+    ConfigManager::instance()->showCommandWindow(!commandWindowDock_->isHidden());
 }
 
 void MainWindow::onToggleCommandButtonAction() {
@@ -363,4 +401,5 @@ void MainWindow::onToggleCommandButtonAction() {
         commandButtonBar_->hide();
         toggleCommandButtonAction_->setIcon(*toggleOffIcon_);
     }
+    ConfigManager::instance()->showCommandButton(!commandButtonBar_->isHidden());
 }

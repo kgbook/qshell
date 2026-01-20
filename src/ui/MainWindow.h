@@ -8,6 +8,7 @@ class SessionTreeWidget;
 class CommandButtonBar;
 class CommandWindow;
 class BaseTerminal;
+class CollapsibleDockWidget;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -15,6 +16,7 @@ class MainWindow : public QMainWindow {
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override = default;
+    void showEvent(QShowEvent *event) override;
 
 private slots:
     void onOpenSession(const QString& sessionId);
@@ -48,6 +50,7 @@ private:
     void initTableWidget();
     void initCommandWindow();
     void initButtonBar();
+    void restoreLayoutState();
 
     QIcon *connectIcon_ = nullptr;
     QIcon *disconnectIcon_ = nullptr;
@@ -95,7 +98,7 @@ private:
     SessionTreeWidget *treeWidget_ = nullptr;
 
     // session manager
-    QDockWidget *sessionDock_ = nullptr;
+    CollapsibleDockWidget *sessionDock_ = nullptr;
     SessionTreeWidget *sessionTree_ = nullptr;
 
     // command window
