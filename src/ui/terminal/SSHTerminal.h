@@ -1,11 +1,11 @@
 #ifndef QSHELL_SSH_TERMINAL_H
 #define QSHELL_SSH_TERMINAL_H
 
+#include "BaseTerminal.h"
+#include "core/datatype.h"
 #include <QDir>
 #include <QFile>
 #include <QSocketNotifier>
-#include "BaseTerminal.h"
-#include "core/SessionData.h"
 
 #if defined(Q_CC_MSVC)
 #include <winsock2.h>

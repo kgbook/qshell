@@ -1,8 +1,8 @@
 #ifndef GROUPDIALOG_H
 #define GROUPDIALOG_H
 
+#include "core/datatype.h"
 #include <QDialog>
-#include "core/SessionData.h"
 
 class QLineEdit;
 

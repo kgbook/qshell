@@ -1,17 +1,17 @@
 #include "SessionTreeWidget.h"
-#include "SessionEditDialog.h"
 #include "GroupEditDialog.h"
+#include "SessionEditDialog.h"
 #include "core/ConfigManager.h"
-#include "core/SessionData.h"
+#include "core/datatype.h"
 
-#include <QVBoxLayout>
-#include <QMenu>
-#include <QMessageBox>
-#include <QHeaderView>
 #include <QDragEnterEvent>
 #include <QDragMoveEvent>
 #include <QDropEvent>
+#include <QHeaderView>
+#include <QMenu>
+#include <QMessageBox>
 #include <QMimeData>
+#include <QVBoxLayout>
 
 // 自定义数据角色
 enum {

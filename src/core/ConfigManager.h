@@ -1,9 +1,9 @@
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
-#include <QObject>
+#include "datatype.h"
 #include <QMap>
-#include "SessionData.h"
+#include <QObject>
 
 class ConfigManager : public QObject {
     Q_OBJECT

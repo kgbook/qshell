@@ -1,8 +1,8 @@
 #ifndef SESSIONDIALOG_H
 #define SESSIONDIALOG_H
 
+#include "core/datatype.h"
 #include <QDialog>
-#include "core/SessionData.h"
 
 class QLineEdit;
 class QComboBox;

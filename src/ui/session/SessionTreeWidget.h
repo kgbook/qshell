@@ -4,7 +4,7 @@
 #include <QItemDelegate>
 #include <QTreeWidget>
 
-#include "core/SessionData.h"
+#include "core/datatype.h"
 
 class SessionTreeWidget : public QTreeWidget {
     Q_OBJECT
