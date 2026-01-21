@@ -14,7 +14,6 @@ void LocalTerminal::connect() {
 
 void LocalTerminal::disconnect() {
     if (localShell_) {
-        localShell_->kill();
         delete localShell_;
         localShell_ = nullptr;
     }
