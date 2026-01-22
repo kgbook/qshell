@@ -80,8 +80,12 @@ void SSHTerminal::onSocketReadyRead() {
         readNotifier_->setEnabled(false);
     }
 
-    readAvailableData();  // 原有 shell 数据
-    pumpRemoteX11();      // 新增：X11 子通道数据泵
+    readAvailableData();   // 原有 shell 数据
+    pumpRemoteX11();       // 远端→本地 累积与下发
+    // 把本地积压（EAGAIN 时未写完）继续推送到远端
+    for (auto *xf : x11Chans_) {
+        flushX11ToRemote(xf);
+    }
 
     // 重新启用通知
     if (readNotifier_ && running_) {
@@ -160,7 +164,7 @@ bool SSHTerminal::createSocket() {
         return false;
     }
 
-    // 设置 socket 为非阻塞模式（连接完成后）
+    // 设置 socket 超时
     DWORD timeout = 30000;
     setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
     setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
@@ -240,7 +244,7 @@ bool SSHTerminal::initSession() {
         return false;
     }
 
-    // —— 注册 X11 回调
+    // 注册 X11 回调
     void **abs = libssh2_session_abstract(session_);
     *abs = this;
     libssh2_session_callback_set(session_, LIBSSH2_CALLBACK_X11, (void*)x11Callback);
@@ -435,10 +439,10 @@ bool SSHTerminal::openChannel() {
         return false;
     }
 
-    // —— 新增：请求 X11 转发（0 = 允许多连接）——
+    // —— 请求 X11 转发（0=允许多连接）——
     rc = libssh2_channel_x11_req(channel_, 0);
     if (rc) {
-        QMessageBox::warning(this, tr("SSH Error"), tr("Failed to request X11 forwarding"));
+        QMessageBox::critical(this, tr("SSH Error"), tr("Failed to request X11 forwarding"));
         emit onSessionError(this);
         return false;
     }
@@ -527,28 +531,37 @@ void SSHTerminal::handleNewX11Channel(LIBSSH2_CHANNEL *chan)
     auto *xf = new X11Forward;
     xf->chan  = chan;
     xf->xsock = xsock;
-    xf->notifier = new QSocketNotifier((qintptr)xsock, QSocketNotifier::Read, this);
 
-    // 本地 -> 远端
+    // 本地 -> 远端：读就绪，从 xsock 读，存入 toRemote，再 flush
+    xf->notifier = new QSocketNotifier((qintptr)xsock, QSocketNotifier::Read, this);
     QObject::connect(xf->notifier, &QSocketNotifier::activated,
                      this, [this, xf](qintptr){
-        char buf[8192];
-        int n = recv(xf->xsock, buf, sizeof(buf), 0);
-        if (n > 0) {
-            int sent = 0;
-            while (sent < n) {
-                int w = libssh2_channel_write(xf->chan, buf + sent, n - sent);
-                if (w == LIBSSH2_ERROR_EAGAIN) {
-                    QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 1);
-                    continue;
-                }
-                if (w < 0) break;
-                sent += w;
+        char buf[16384];
+        for (;;) {
+            int n = recv(xf->xsock, buf, sizeof(buf), 0);
+            if (n > 0) {
+                xf->toRemote.append(buf, n);
+            } else if (n == 0) {
+                if (xf->notifier) xf->notifier->deleteLater();
+                libssh2_channel_send_eof(xf->chan);
+                break;
+            } else {
+                int err = WSAGetLastError();
+                if (err == WSAEWOULDBLOCK) break;
+                if (xf->notifier) xf->notifier->deleteLater();
+                libssh2_channel_send_eof(xf->chan);
+                break;
             }
-        } else { // 对端关闭
-            if (xf->notifier) xf->notifier->deleteLater();
-            libssh2_channel_send_eof(xf->chan);
         }
+        flushX11ToRemote(xf);
+    });
+
+    // 远端 -> 本地：写就绪（当 send() 返回 EWOULDBLOCK 时启用）
+    xf->writable = new QSocketNotifier((qintptr)xsock, QSocketNotifier::Write, this);
+    xf->writable->setEnabled(false);
+    QObject::connect(xf->writable, &QSocketNotifier::activated,
+                     this, [this, xf](qintptr){
+        flushX11ToLocal(xf);
     });
 
     x11Chans_.push_back(xf);
@@ -557,21 +570,86 @@ void SSHTerminal::handleNewX11Channel(LIBSSH2_CHANNEL *chan)
 
 void SSHTerminal::pumpRemoteX11()
 {
-    char buf[8192];
+    char buf[16384];
+
     for (auto it = x11Chans_.begin(); it != x11Chans_.end(); ) {
         X11Forward *xf = *it;
-        ssize_t r = libssh2_channel_read(xf->chan, buf, sizeof(buf));
-        if (r > 0) {
-            send(xf->xsock, buf, static_cast<int>(r), 0);
-            ++it;
-        } else if (r == LIBSSH2_ERROR_EAGAIN) {
-            ++it;
-        } else { // 关闭或错误
+
+        // 远端可读 -> 累积到 toLocal
+        for (;;) {
+            ssize_t r = libssh2_channel_read(xf->chan, buf, sizeof(buf));
+            if (r > 0) {
+                xf->toLocal.append(buf, int(r));
+                continue;
+            } else if (r == LIBSSH2_ERROR_EAGAIN) {
+                break;
+            } else { // 关闭或错误
+                if (xf->notifier) xf->notifier->deleteLater();
+                if (xf->writable) xf->writable->deleteLater();
+                if (xf->xsock != INVALID_SOCKET) closesocket(xf->xsock);
+                if (xf->chan) libssh2_channel_free(xf->chan);
+                delete xf;
+                it = x11Chans_.erase(it);
+                goto next_iter;
+            }
+        }
+
+        // 将累积的 toLocal 写到本地 X server
+        flushX11ToLocal(xf);
+        ++it;
+    next_iter:
+        ;
+    }
+}
+
+void SSHTerminal::flushX11ToLocal(X11Forward *xf)
+{
+    while (!xf->toLocal.isEmpty()) {
+        int w = send(xf->xsock, xf->toLocal.constData(), xf->toLocal.size(), 0);
+        if (w > 0) {
+            xf->toLocal.remove(0, w);
+        } else if (w == 0) {
             if (xf->notifier) xf->notifier->deleteLater();
+            if (xf->writable) xf->writable->deleteLater();
+            closesocket(xf->xsock);
+            libssh2_channel_free(xf->chan);
+            xf->xsock = INVALID_SOCKET;
+            break;
+        } else {
+            int err = WSAGetLastError();
+            if (err == WSAEWOULDBLOCK) {
+                if (xf->writable) xf->writable->setEnabled(true);
+                break;
+            }
+            if (xf->notifier) xf->notifier->deleteLater();
+            if (xf->writable) xf->writable->deleteLater();
             if (xf->xsock != INVALID_SOCKET) closesocket(xf->xsock);
             if (xf->chan) libssh2_channel_free(xf->chan);
-            delete xf;
-            it = x11Chans_.erase(it);
+            xf->xsock = INVALID_SOCKET;
+            break;
+        }
+    }
+    if (xf->toLocal.isEmpty() && xf->writable) {
+        xf->writable->setEnabled(false);
+    }
+}
+
+void SSHTerminal::flushX11ToRemote(X11Forward *xf)
+{
+    while (!xf->toRemote.isEmpty()) {
+        int w = libssh2_channel_write(xf->chan, xf->toRemote.constData(), xf->toRemote.size());
+        if (w > 0) {
+            xf->toRemote.remove(0, w);
+            continue;
+        } else if (w == LIBSSH2_ERROR_EAGAIN) {
+            break; // 等下一轮 onSocketReadyRead()
+        } else {
+            if (xf->notifier) xf->notifier->deleteLater();
+            if (xf->writable) xf->writable->deleteLater();
+            if (xf->xsock != INVALID_SOCKET) closesocket(xf->xsock);
+            if (xf->chan) libssh2_channel_free(xf->chan);
+            xf->xsock = INVALID_SOCKET;
+            break;
         }
     }
 }
@@ -582,6 +660,7 @@ void SSHTerminal::cleanup() {
     // 关闭 X11 子通道与本地 socket
     for (auto *xf : x11Chans_) {
         if (xf->notifier) xf->notifier->deleteLater();
+        if (xf->writable) xf->writable->deleteLater();
         if (xf->chan)     libssh2_channel_free(xf->chan);
         if (xf->xsock != INVALID_SOCKET) closesocket(xf->xsock);
         delete xf;

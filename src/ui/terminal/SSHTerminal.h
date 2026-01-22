@@ -43,11 +43,14 @@ private slots:
     void onSocketReadyRead();
 
 private:
-    // ====== X11 Forwarding ======
+    // ===== X11 Forwarding（Windows） =====
     struct X11Forward {
         LIBSSH2_CHANNEL *chan = nullptr;          // 远端 X11 子通道
-        SOCKET           xsock = INVALID_SOCKET;   // 本地到 VcXsrv 的 socket
-        QSocketNotifier *notifier = nullptr;       // 监听 xsock 的可读事件
+        SOCKET           xsock = INVALID_SOCKET;   // 本地到 VcXsrv 的 TCP
+        QSocketNotifier *notifier = nullptr;       // xsock 可读
+        QSocketNotifier *writable = nullptr;       // xsock 可写（背压用）
+        QByteArray toLocal;                        // 远端→本地 待写缓冲
+        QByteArray toRemote;                       // 本地→远端 待写缓冲
     };
 
     static void x11Callback(LIBSSH2_SESSION *session,
@@ -56,6 +59,8 @@ private:
                             void **abstract);
     void handleNewX11Channel(LIBSSH2_CHANNEL *chan);
     void pumpRemoteX11();
+    void flushX11ToLocal(X11Forward *xf);
+    void flushX11ToRemote(X11Forward *xf);
 
 private:
     SOCKET sock_ = INVALID_SOCKET;
@@ -63,9 +68,6 @@ private:
     LIBSSH2_CHANNEL *channel_ = nullptr;
     bool running_ = false;
     QSocketNotifier *readNotifier_ = nullptr;
-
-    // BaseTerminal 里已有 connect_；此处沿用其语义（原代码已使用）
-    // bool connect_ = false; // 不重复声明
 
     std::vector<X11Forward*> x11Chans_;
 #endif
