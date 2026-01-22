@@ -40,52 +40,19 @@ jobs:
           arch: x64
           toolset: 14.29
 
-      - name: Build
+      # 非 tag 推送：仅构建
+      - name: Build Only
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         shell: pwsh
         run: |
-          cmake -B build -S .
-          cmake --build build --config Release
+          .\scripts\windows-build.ps1 -BuildOnly
 
-      # 以下步骤仅在 tag 推送时执行
-      - name: Create deployment directory
+      # tag 推送：构建 + 打包
+      - name: Build and Package
         if: startsWith(github.ref, 'refs/tags/')
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path deploy
-          # 复制编译好的 exe 文件（根据实际输出路径调整）
-          Copy-Item -Path "build/src/Release/qshell.exe" -Destination "deploy/" -Force
-
-      - name: Deploy Qt dependencies
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        run: |
-          # 使用 windeployqt 自动收集 Qt 依赖
-          cd deploy
-          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw qshell.exe
-
-      - name: Copy additional dependencies
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        run: |
-          # 如果有其他依赖文件，在这里复制
-          # Copy-Item -Path "path/to/other/deps/*" -Destination "deploy/" -Force
-          
-          # 复制配置文件、资源等（根据项目需要调整）
-          # Copy-Item -Path "config/*" -Destination "deploy/config/" -Recurse -Force
-
-      - name: Create ZIP archive
-        if: startsWith(github.ref, 'refs/tags/')
-        shell: pwsh
-        run: |
-          # 获取 tag 名称
-          $tagName = "${{ github.ref_name }}"
-          $zipName = "qshell-${tagName}-win64.zip"
-          
-          # 打包
-          Compress-Archive -Path "deploy/*" -DestinationPath $zipName
-          
-          # 输出变量供后续步骤使用
-          echo "ZIP_NAME=$zipName" >> $env:GITHUB_ENV
+          .\scripts\windows-build.ps1 -Version "${{ github.ref_name }}"
 
       - name: Create Release and Upload
         if: startsWith(github.ref, 'refs/tags/')
