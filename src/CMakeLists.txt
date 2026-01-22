@@ -29,10 +29,18 @@ else ()
     message(FATAL_ERROR "${CMAKE_SYSTEM_NAME} not supported")
 endif ()
 
-add_executable(qshell main.cpp
-        resources/resources.qrc
-        ${SRC_FILES}
-)
+if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    add_executable(qshell WIN32
+            ${SRC_FILES}
+            resources/resources.qrc
+    )
+    target_link_libraries(qshell libssh2_static)
+else ()
+    add_executable(qshell
+            ${SRC_FILES}
+            resources/resources.qrc
+    )
+endif ()
 
 target_link_libraries(qshell
         Qt::Core
@@ -42,10 +50,6 @@ target_link_libraries(qshell
         qtermwidget
         ptyqt
 )
-
-if (CMAKE_SYSTEM_NAME MATCHES "Windows")
-    target_link_libraries(qshell libssh2_static)
-endif ()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "$ENV{Qt6_DIR}/bin")

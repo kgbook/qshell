@@ -10,6 +10,7 @@ SettingDialog::SettingDialog(QWidget *parent) :QDialog(parent) {
     fontSizeEdit_->setText(QString::number(config->globalSettings().fontSize));
     colorSchemeEdit_->setCurrentText(config->globalSettings().colorScheme);
     copyOnSelectCheckBox_->setChecked(config->globalSettings().copyOnSelect);
+    debugCheckBox_->setChecked(config->globalSettings().debug);
 }
 
 SettingDialog::~SettingDialog() = default;
@@ -33,6 +34,10 @@ void SettingDialog::initWidgets() {
     copyOnSelectCheckBox_ = new QCheckBox(this);
     copyOnSelectCheckBox_->setToolTip(tr("Automatically copy selected text to clipboard"));
     formLayout_->addRow(tr("Copy on Select:"), copyOnSelectCheckBox_);
+
+    debugCheckBox_ = new QCheckBox(this);
+    debugCheckBox_->setToolTip(tr("Enable debug log console"));
+    formLayout_->addRow(tr("Enable debug"), debugCheckBox_);
 
     buttonLayout_ = new QHBoxLayout(this);
     mainLayout_->addLayout(buttonLayout_);
@@ -59,6 +64,7 @@ void SettingDialog::onOK() {
     settings.fontSize = fontSizeEdit_->text().toInt();
     settings.colorScheme = colorSchemeEdit_->currentText();
     settings.copyOnSelect = copyOnSelectCheckBox_->isChecked();
+    settings.debug = debugCheckBox_->isChecked();
     ConfigManager::instance()->setGlobalSettings(settings);
     close();
 }

@@ -31,6 +31,7 @@ private:
     QLineEdit *fontSizeEdit_ = nullptr;
     QComboBox *colorSchemeEdit_ = nullptr;
     QCheckBox *copyOnSelectCheckBox_ = nullptr;
+    QCheckBox *debugCheckBox_ = nullptr;
 
     QHBoxLayout *buttonLayout_ = nullptr;
     QPushButton *okButton_ = nullptr;
