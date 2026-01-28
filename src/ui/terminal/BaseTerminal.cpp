@@ -24,6 +24,7 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
     setTerminalFont(*font_);
     setHistorySize(128000);
     setTerminalSizeHint(false);
+    setUrlFilterEnabled(false);
     setColorScheme(globalSettings.colorScheme);
     setScrollBarPosition(ScrollBarRight);
 
