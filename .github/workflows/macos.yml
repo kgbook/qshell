@@ -21,16 +21,15 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.7.3'
-          modules: 'qtserialport qtmultimedia'
+          modules: 'qtserialport'
           aqtversion: '==3.1.20'
 
       - name: Install prerequisites
         run: |
           ruby - e  "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null  2 > /dev/null
-          brew install create-dmg utf8proc coreutils cmake pkg-config
+          brew install create-dmg coreutils cmake
 
       - name: Build
         run: |
-          mkdir build && cd build
-          cmake ..
-          make -j8
+          cmake -B build -S .
+          cmake --build build

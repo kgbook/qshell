@@ -21,16 +21,15 @@ jobs:
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.1'
-          modules: 'qtserialport qtmultimedia'
+          modules: 'qtserialport'
           aqtversion: '==3.1.20'
 
       - name: Install prerequisites
         run: |
           sudo apt update
-          sudo apt install -y cmake build-essential clang-tidy libutf8proc-dev
+          sudo apt install -y cmake build-essential clang-tidy 
       
       - name: Build
         run: |
-          mkdir build && cd build
-          cmake ..
-          make -j8
+          cmake -B build -S .
+          cmake --build build
