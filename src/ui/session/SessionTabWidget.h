@@ -13,7 +13,6 @@ public:
 private slots:
     void showTabContextMenu(const QPoint &pos);
     void renameTab();
-    void closeTab();
 
 private:
     int m_contextMenuTabIndex = -1;  // 记录右键点击的 tab 索引
