@@ -193,15 +193,6 @@ void MainWindow::onTabCloseRequested(int index) const {
     delete tab;
 }
 
-void MainWindow::onDisconnectAction() const {
-    if (currentTab_ == nullptr) {
-        return;
-    }
-
-    currentTab_->disconnect();
-    tabWidget_->setTabIcon(tabWidget_->currentIndex(), *disconnectStateIcon_);
-}
-
 void MainWindow::onCommandSend(const QString &command) {
     if (currentTab_ != nullptr) {
         QString str = command;
@@ -219,7 +210,7 @@ void MainWindow::initActions() {
     connect(connectAction_, &QAction::triggered, this, &MainWindow::onConnectAction);
 
     disConnectAction_ = new QAction(*disconnectIcon_, tr("Disconnect"), this);
-    disConnectAction_->setEnabled(false);
+    disConnectAction_->setEnabled(true);
     connect(disConnectAction_, &QAction::triggered, this, &MainWindow::onDisconnectAction);
 
     exitAction_ = new QAction(*exitIcon_, tr("Exit"), this);
@@ -334,6 +325,19 @@ void MainWindow::onConnectAction() {
     }
 
     tabWidget_->setTabIcon(tabWidget_->currentIndex(), *connectStateIcon_);
+}
+
+void MainWindow::onDisconnectAction() const {
+    if (currentTab_ == nullptr) {
+        return;
+    }
+
+    currentTab_->disconnect();
+    if (!currentTab_->isConnect()) {
+        connectAction_->setEnabled(true);
+        disConnectAction_->setEnabled(false);
+    }
+    tabWidget_->setTabIcon(tabWidget_->currentIndex(), *disconnectStateIcon_);
 }
 
 void MainWindow::onExitAction() {
