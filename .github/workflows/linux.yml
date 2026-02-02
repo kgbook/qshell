@@ -31,5 +31,4 @@ jobs:
       
       - name: Build
         run: |
-          cmake -B build -S .
-          cmake --build build
+          ./scripts/linux-build.sh

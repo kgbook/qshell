@@ -75,3 +75,34 @@ install(FILES resources/qshell.desktop
 install(FILES resources/images/qshell.png
         DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps)
 endif ()
+
+
+# ==================== CPack DEB 打包配置 ====================
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    # 基本信息
+    set(CPACK_PACKAGE_NAME "qshell")
+    set(CPACK_PACKAGE_VERSION "1.0.3")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "QShell Terminal Emulator")
+    set(CPACK_PACKAGE_DESCRIPTION "A multi-protocol terminal emulator supporting SSH, Serial, and Local terminals.")
+    set(CPACK_PACKAGE_VENDOR "qiushao")
+    set(CPACK_PACKAGE_CONTACT "360325900@qq.com")
+    set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/qiushao/qshell")
+
+    # 设置打包类型为 DEB
+    set(CPACK_GENERATOR "DEB")
+
+    # DEB 特定配置
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "qiushao <360325900@qq.com>")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+
+    # 自动检测依赖 - 会自动处理 Qt、系统库等
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    # 或使用 DEB-DEFAULT 自动生成标准命名
+     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+
+    # 包含 CPack 模块
+    include(CPack)
+endif()
+
