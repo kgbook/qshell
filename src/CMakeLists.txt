@@ -79,9 +79,14 @@ endif ()
 
 # ==================== CPack DEB 打包配置 ====================
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    # 版本号 - 从命令行传入，默认 1.0.0
+    if(NOT DEFINED APP_VERSION)
+        set(APP_VERSION "1.0.0")
+    endif()
+
     # 基本信息
     set(CPACK_PACKAGE_NAME "qshell")
-    set(CPACK_PACKAGE_VERSION "1.0.3")
+    set(CPACK_PACKAGE_VERSION "${APP_VERSION}")
     set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "QShell Terminal Emulator")
     set(CPACK_PACKAGE_DESCRIPTION "A multi-protocol terminal emulator supporting SSH, Serial, and Local terminals.")
     set(CPACK_PACKAGE_VENDOR "qiushao")
@@ -97,12 +102,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
 
-    # 自动检测依赖 - 会自动处理 Qt、系统库等
+    # 自动检测依赖
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-    # 或使用 DEB-DEFAULT 自动生成标准命名
-     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 
-    # 包含 CPack 模块
     include(CPack)
 endif()
-
