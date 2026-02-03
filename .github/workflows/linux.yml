@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - 'docs/**'
       - 'README.md'
+      - 'BUILD.md'
       - 'CHANGELOG.md'
     tags:
       - 'V**'
