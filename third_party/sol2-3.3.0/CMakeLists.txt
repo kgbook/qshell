@@ -5,11 +5,13 @@ target_include_directories(sol2 INTERFACE
 
 # Sol2 需要 C++17
 target_compile_features(sol2 INTERFACE cxx_std_17)
-# macOS 兼容性修复
+# Apple Clang 兼容性修复 - 关键宏定义
 if(APPLE)
     target_compile_definitions(sol2 INTERFACE
             SOL_ALL_SAFETIES_ON=1
-            SOL_USING_CXX_LUA=0
+            SOL_STD_VARIANT=1
+            # 禁用有问题的 tl::optional 引用特化
+            TL_OPTIONAL_NO_CONSTRR=1
     )
 endif()
 
