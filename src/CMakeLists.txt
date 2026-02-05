@@ -49,6 +49,8 @@ target_link_libraries(qshell
         Qt::SerialPort
         qtermwidget
         ptyqt
+        lua_static
+        sol2
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
