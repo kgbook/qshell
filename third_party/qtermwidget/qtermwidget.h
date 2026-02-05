@@ -276,6 +276,11 @@ signals:
     void notifyBell();
     void activity();
     void silence();
+
+    //qiushao patch start
+    void onNewLine(const QString &line);
+    //qiushao patch end
+
     /**
      * Emitted when the activity state of this session changes.
      *

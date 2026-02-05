@@ -150,10 +150,32 @@ int Screen::topMargin() const { return _topMargin; }
 int Screen::bottomMargin() const { return _bottomMargin; }
 
 void Screen::index() {
-    if (cuY == _bottomMargin)
+    //qiushao patch start
+    int startLine = 0;
+
+    if (cuY == _bottomMargin) {
+        startLine = lines + history->getLines() - 1;
         scrollUp(1);
-    else if (cuY < lines - 1)
+    }
+    else if (cuY < lines-1) {
+        startLine = cuY;
         cuY += 1;
+    }
+
+    QString result;
+    QTextStream stream(&result, QIODevice::ReadWrite);
+
+    PlainTextDecoder decoder;
+    decoder.begin(&stream);
+    copyLineToStream( startLine,
+                      0,
+                      -1,
+                      &decoder,
+                      false,
+                      false );
+    decoder.end();
+    emit onNewLine(result);
+    //qiushao patch end
 }
 
 void Screen::reverseIndex() {

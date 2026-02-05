@@ -147,6 +147,10 @@ QTermWidget::QTermWidget(QWidget *messageParentWidget, QWidget *parent)
         }
         setSize(size);
     });
+
+    //qiushao patch start
+    connect(m_terminalDisplay->screenWindow()->screen(), &Screen::onNewLine, this, &QTermWidget::onNewLine);
+    //qiushao patch end
 }
 
 QTermWidget::~QTermWidget() {

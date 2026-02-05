@@ -32,7 +32,7 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
         QObject::connect(this, &QTermWidget::copyAvailable, this, &BaseTerminal::onCopyAvailable);
     }
 
-    QObject::connect(this, &QTermWidget::dupDisplayOutput, this, &BaseTerminal::onDisplayOutput);
+    QObject::connect(this, &QTermWidget::onNewLine, this, &BaseTerminal::onDisplayOutput);
 
     // 启用右键菜单
     setContextMenuPolicy(Qt::DefaultContextMenu);
@@ -122,10 +122,10 @@ QString BaseTerminal::logFilePath() const {
     return logFilePath_;
 }
 
-void BaseTerminal::onDisplayOutput(const char *data, int len) {
+void BaseTerminal::onDisplayOutput(const QString &line) {
     // 如果正在记录日志，写入数据
     if (logging_ && logFile_ && logFile_->isOpen()) {
-        writeToLog(data, len);
+        writeToLog(line);
     }
 }
 
@@ -285,13 +285,14 @@ void BaseTerminal::stopLogging() {
     qDebug() << "Stopped logging to:" << logFilePath_;
 }
 
-void BaseTerminal::writeToLog(const char *data, int len) {
+void BaseTerminal::writeToLog(const QString &line) {
     if (!logFile_ || !logFile_->isOpen()) {
         return;
     }
 
     // 直接写入原始数据
-    logFile_->write(data, len);
+    logFile_->write(line.toUtf8());
+    logFile_->write("\n");
 
     // 定期刷新确保数据写入磁盘
     static int writeCount = 0;

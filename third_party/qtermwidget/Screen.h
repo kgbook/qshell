@@ -22,6 +22,7 @@
 #ifndef SCREEN_H
 #define SCREEN_H
 
+#include <QObject>
 #include <QRect>
 #include <QSet>
 #include <QTextStream>
@@ -63,8 +64,9 @@ class TerminalCharacterDecoder;
     using selectedText().  When getImage() is used to retrieve the visible image,
     characters which are part of the selection have their colours inverted.
 */
-class Screen
+class Screen : public QObject
 {
+    Q_OBJECT
 public:
     /** Construct a new screen image of size @p lines by @p columns. */
     Screen(int lines, int columns);
@@ -555,7 +557,7 @@ public:
       * Character style.
       */
     static void fillWithDefaultChar(Character* dest, int count);
-    
+
     QSet<uint> usedExtendedChars() const {
         QSet<uint> result;
         for (int i = 0; i < lines; ++i) {
@@ -568,6 +570,12 @@ public:
         }
         return result;
     }
+
+
+    //qiushao patch start
+signals:
+    void onNewLine(const QString &line);
+    //qiushao patch end
 
 private:
     Screen(const Screen &) = delete;

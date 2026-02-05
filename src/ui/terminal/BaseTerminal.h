@@ -29,7 +29,7 @@ signals:
     void loggingStateChanged(bool isLogging);
 
 protected:
-    void onDisplayOutput(const char *data, int len);
+    void onDisplayOutput(const QString &line);
     void onCopyAvailable(bool copyAvailable);
 
     // 右键菜单事件
@@ -41,7 +41,7 @@ private slots:
 private:
     void startLogging(const QString &filePath);
     void stopLogging();
-    void writeToLog(const char *data, int len);
+    void writeToLog(const QString &line);
 
 protected:
     QFont *font_ = nullptr;
