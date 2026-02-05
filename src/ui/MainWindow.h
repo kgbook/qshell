@@ -44,6 +44,11 @@ private slots:
 
     void onFullscreenAction();
 
+    // Script menu slots
+    void onRunLuaScriptAction();
+    static void onStopScriptAction();
+    void onRecentScriptTriggered();
+
 private:
     void initIcons();
     void initActions();
@@ -56,6 +61,12 @@ private:
     void restoreLayoutState();
     void exitFullscreen();
 
+    void runScript(const QString &scriptPath);
+    void addRecentScript(const QString &scriptPath);
+    void loadRecentScripts();
+    void saveRecentScripts();
+    void updateRecentScriptsMenu();
+
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     QIcon *connectIcon_ = nullptr;
@@ -67,6 +78,7 @@ private:
     QMenu *fileMenu_ = nullptr;
     QMenu *editMenu_ = nullptr;
     QMenu *viewMenu_ = nullptr;
+    QMenu *scriptMenu_ = nullptr;
     QMenu *helpMenu_ = nullptr;
 
     QToolBar *toolBar_ = nullptr;
@@ -101,6 +113,13 @@ private:
     QAction *toggleCommandButtonAction_ = nullptr;
 
     QAction *fullscreenAction_ = nullptr;
+
+    // Script actions
+    QAction *runLuaScriptAction_ = nullptr;
+    QAction *stopScriptAction_ = nullptr;
+    QMenu *recentScriptMenu_ = nullptr;
+    QStringList recentScripts_;
+    static constexpr int MaxRecentScripts = 10;
 
     // session table
     BaseTerminal *currentTab_ = nullptr;

@@ -16,6 +16,7 @@
 #include <QFileDialog>
 #include <QKeyEvent>
 #include <QMenuBar>
+#include <QSettings>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
@@ -252,6 +253,14 @@ void MainWindow::initActions() {
     fullscreenAction_ = new QAction(*fullscreenIcon_, tr("Fullscreen"), this);
     fullscreenAction_->setShortcut(QApplication::translate("MainWindow", "F11", nullptr));
     connect(fullscreenAction_, &QAction::triggered, this, &MainWindow::onFullscreenAction);
+
+    // Script actions
+    runLuaScriptAction_ = new QAction(tr("Run Lua Script..."), this);
+    connect(runLuaScriptAction_, &QAction::triggered, this, &MainWindow::onRunLuaScriptAction);
+
+    stopScriptAction_ = new QAction(tr("Stop Script"), this);
+    stopScriptAction_->setEnabled(false);
+    connect(stopScriptAction_, &QAction::triggered, this, &MainWindow::onStopScriptAction);
 }
 
 void MainWindow::initMenu() {
@@ -281,6 +290,16 @@ void MainWindow::initMenu() {
     viewMenu_->addAction(toggleCommandButtonAction_);
     viewMenu_->addSeparator();
     viewMenu_->addAction(fullscreenAction_);
+
+    // Script menu
+    scriptMenu_ = new QMenu(tr("Script"), mainMenuBar_);
+    mainMenuBar_->addAction(scriptMenu_->menuAction());
+    scriptMenu_->addAction(runLuaScriptAction_);
+    scriptMenu_->addAction(stopScriptAction_);
+    scriptMenu_->addSeparator();
+    recentScriptMenu_ = scriptMenu_->addMenu(tr("Recent Scripts"));
+    loadRecentScripts();
+    updateRecentScriptsMenu();
 
     helpMenu_ = new QMenu(tr("Help"), mainMenuBar_);
     mainMenuBar_->addAction(helpMenu_->menuAction());
@@ -549,4 +568,104 @@ void MainWindow::exitFullscreen() {
 
     isFullscreen_ = false;
     fullscreenWidget_ = nullptr;
+}
+
+void MainWindow::onRunLuaScriptAction() {
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Select Lua Script"),
+        QString(),
+        tr("Lua Scripts (*.lua);;All Files (*)")
+    );
+
+    if (!filePath.isEmpty()) {
+        runScript(filePath);
+    }
+}
+
+void MainWindow::onStopScriptAction() {
+    // TODO: 实现停止脚本的逻辑
+    qDebug() << "Stop script requested";
+}
+
+void MainWindow::onRecentScriptTriggered() {
+    auto *action = qobject_cast<QAction *>(sender());
+    if (action) {
+        QString scriptPath = action->data().toString();
+        if (QFile::exists(scriptPath)) {
+            runScript(scriptPath);
+        } else {
+            // 文件不存在，从列表中移除
+            recentScripts_.removeAll(scriptPath);
+            saveRecentScripts();
+            updateRecentScriptsMenu();
+        }
+    }
+}
+
+void MainWindow::runScript(const QString &scriptPath) {
+    // TODO: 实现运行 Lua 脚本的逻辑
+    qDebug() << "Running script:" << scriptPath;
+
+    addRecentScript(scriptPath);
+}
+
+void MainWindow::addRecentScript(const QString &scriptPath) {
+    // 移除已存在的相同路径
+    recentScripts_.removeAll(scriptPath);
+
+    // 添加到列表开头
+    recentScripts_.prepend(scriptPath);
+
+    // 限制最大数量
+    while (recentScripts_.size() > MaxRecentScripts) {
+        recentScripts_.removeLast();
+    }
+
+    saveRecentScripts();
+    updateRecentScriptsMenu();
+}
+
+void MainWindow::loadRecentScripts() {
+    QSettings settings;
+    recentScripts_ = settings.value("recentScripts").toStringList();
+
+    // 限制最大数量
+    while (recentScripts_.size() > MaxRecentScripts) {
+        recentScripts_.removeLast();
+    }
+}
+
+void MainWindow::saveRecentScripts() {
+    QSettings settings;
+    settings.setValue("recentScripts", recentScripts_);
+}
+
+void MainWindow::updateRecentScriptsMenu() {
+    recentScriptMenu_->clear();
+
+    if (recentScripts_.isEmpty()) {
+        QAction *emptyAction = recentScriptMenu_->addAction(tr("No Recent Scripts"));
+        emptyAction->setEnabled(false);
+        return;
+    }
+
+    for (int i = 0; i < recentScripts_.size(); ++i) {
+        const QString &scriptPath = recentScripts_.at(i);
+        QFileInfo fileInfo(scriptPath);
+        QString displayName = QString("%1. %2").arg(i + 1).arg(fileInfo.fileName());
+
+        QAction *action = recentScriptMenu_->addAction(displayName);
+        action->setData(scriptPath);
+        action->setToolTip(scriptPath);
+        connect(action, &QAction::triggered, this, &MainWindow::onRecentScriptTriggered);
+    }
+
+    recentScriptMenu_->addSeparator();
+    QAction *clearAction = recentScriptMenu_->addAction(tr("Clear Recent Scripts"));
+    connect(clearAction, &QAction::triggered, this, [this]() {
+        recentScripts_.clear();
+        saveRecentScripts();
+        updateRecentScriptsMenu();
+    });
 }
