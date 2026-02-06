@@ -19,6 +19,7 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override = default;
     void showEvent(QShowEvent *event) override;
+    Q_INVOKABLE QString getScreenText() const;
 
 private slots:
     void onOpenSession(const QString& sessionId);
@@ -27,6 +28,7 @@ private slots:
     void onTabChanged(int index);
     void onTabCloseRequested(int index) const;
     void onCommandSend(const QString &command);
+    void onSendKey(const QString& keyName);
 
     void onSettingsAction();
     void onConnectAction();

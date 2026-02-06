@@ -87,12 +87,32 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
 {
     sol::table screen = qshell.create_named("screen");
 
-    // qshell.screen.send(command) 发送指令
-    screen.set_function("send", [this](const std::string& command) {
+    // qshell.screen.sendText(command) 发送指令
+    screen.set_function("sendText", [this](const std::string& command) {
         auto qstr = QString::fromStdString(command);
         QMetaObject::invokeMethod(mainWindow_, "onCommandSend",
             Qt::QueuedConnection,
             Q_ARG(QString, qstr));
+    });
+
+    // qshell.screen.sendKey(keyName) 发送特殊按键
+    // 支持: "Enter", "Tab", "Escape", "Backspace", "Delete",
+    //       "Up", "Down", "Left", "Right", "Home", "End",
+    //       "PageUp", "PageDown", "F1"-"F12", "Ctrl+C" 等
+    screen.set_function("sendKey", [this](const std::string& keyName) {
+        QString qkey = QString::fromStdString(keyName);
+        QMetaObject::invokeMethod(mainWindow_, "onSendKey",
+            Qt::QueuedConnection,
+            Q_ARG(QString, qkey));
+    });
+
+    // qshell.screen.getScreenText() 获取当前屏幕文本
+    screen.set_function("getScreenText", [this]() -> std::string {
+        QString text;
+        QMetaObject::invokeMethod(mainWindow_, "getScreenText",
+            Qt::BlockingQueuedConnection,
+            Q_RETURN_ARG(QString, text));
+        return text.toStdString();
     });
 
     // qshell.screen.clear() 清屏

@@ -718,3 +718,81 @@ void MainWindow::onAboutAction() {
         .arg("Copyright © 2026 qiushao"));
 }
 
+void MainWindow::onSendKey(const QString& keyName)
+{
+    // 按键名称到按键码的映射
+    static const QMap<QString, int> keyMap = {
+        {"Enter",     Qt::Key_Return},
+        {"Return",    Qt::Key_Return},
+        {"Tab",       Qt::Key_Tab},
+        {"Escape",    Qt::Key_Escape},
+        {"Esc",       Qt::Key_Escape},
+        {"Backspace", Qt::Key_Backspace},
+        {"Delete",    Qt::Key_Delete},
+        {"Del",       Qt::Key_Delete},
+        {"Up",        Qt::Key_Up},
+        {"Down",      Qt::Key_Down},
+        {"Left",      Qt::Key_Left},
+        {"Right",     Qt::Key_Right},
+        {"Home",      Qt::Key_Home},
+        {"End",       Qt::Key_End},
+        {"PageUp",    Qt::Key_PageUp},
+        {"PageDown",  Qt::Key_PageDown},
+        {"Insert",    Qt::Key_Insert},
+        {"F1",        Qt::Key_F1},
+        {"F2",        Qt::Key_F2},
+        {"F3",        Qt::Key_F3},
+        {"F4",        Qt::Key_F4},
+        {"F5",        Qt::Key_F5},
+        {"F6",        Qt::Key_F6},
+        {"F7",        Qt::Key_F7},
+        {"F8",        Qt::Key_F8},
+        {"F9",        Qt::Key_F9},
+        {"F10",       Qt::Key_F10},
+        {"F11",       Qt::Key_F11},
+        {"F12",       Qt::Key_F12},
+    };
+
+    // 处理组合键 (如 "Ctrl+C")
+    Qt::KeyboardModifiers modifiers = Qt::NoModifier;
+    QString keyPart = keyName;
+
+    if (keyName.contains("+")) {
+        QStringList parts = keyName.split("+");
+        keyPart = parts.last().trimmed();
+
+        for (int i = 0; i < parts.size() - 1; ++i) {
+            QString mod = parts[i].trimmed().toLower();
+            if (mod == "ctrl")  modifiers |= Qt::ControlModifier;
+            if (mod == "alt")   modifiers |= Qt::AltModifier;
+            if (mod == "shift") modifiers |= Qt::ShiftModifier;
+            if (mod == "meta")  modifiers |= Qt::MetaModifier;
+        }
+    }
+
+    int key = keyMap.value(keyPart, 0);
+
+    // 如果不在映射表中，尝试作为单个字符处理
+    if (key == 0 && keyPart.length() == 1) {
+        key = keyPart.toUpper().at(0).unicode();
+    }
+
+    if (key != 0) {
+        // 发送按键事件到终端控件
+        auto* pressEvent = new QKeyEvent(QEvent::KeyPress, key, modifiers);
+        if (currentTab_) {
+            currentTab_->sendKeyEvent(pressEvent);
+        }
+    }
+}
+
+QString MainWindow::getScreenText() const
+{
+    if (currentTab_) {
+        int row2 = currentTab_->screenLinesCount() - 1;
+        int col2 = currentTab_->screenColumnsCount() - 1;
+        if (row2 < 0) row2 = 0;
+        if (col2 < 0) col2 = 0;
+        return currentTab_->screenGet(0, 0, row2, col2, 2);
+    } else { return ""; }
+}
