@@ -97,10 +97,6 @@ void MainWindow::showEvent(QShowEvent *event) {
     }
 }
 
-BaseTerminal* MainWindow::getCurrentSession() {
-    return currentTab_;
-}
-
 void MainWindow::onOpenSession(const QString &sessionId) {
     auto session = ConfigManager::instance()->session(sessionId);
     BaseTerminal *terminal = nullptr;
