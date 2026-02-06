@@ -796,3 +796,7 @@ QString MainWindow::getScreenText() const
         return currentTab_->screenGet(0, 0, row2, col2, 2);
     } else { return ""; }
 }
+
+BaseTerminal * MainWindow::getCurrentSession() const {
+    return currentTab_;
+}

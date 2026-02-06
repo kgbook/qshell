@@ -20,6 +20,7 @@ public:
     ~MainWindow() override = default;
     void showEvent(QShowEvent *event) override;
     Q_INVOKABLE QString getScreenText() const;
+    BaseTerminal* getCurrentSession() const;
 
 private slots:
     void onOpenSession(const QString& sessionId);

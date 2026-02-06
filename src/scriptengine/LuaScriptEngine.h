@@ -25,8 +25,12 @@ private:
     void registerAPIs();
     void registerAppModule(sol::table &qshell) const;
     void registerScreenModule(sol::table &qshell);
+    void onDisplayOutput(const QString &line);
 
     sol::state lua_;
     MainWindow *mainWindow_ = nullptr;
     std::atomic<bool> running_{false};
+    bool isWaitForString_ = false;
+    bool findWaitForString_ = false;
+    QString waitForString_;
 };

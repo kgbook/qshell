@@ -4,6 +4,7 @@
 #include <QTimer>
 #include <QRegularExpression>
 #include "ui/MainWindow.h"
+#include "ui/terminal/BaseTerminal.h"
 
 #include <QCoreApplication>
 #include <QMessageBox>
@@ -120,6 +121,35 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
         QMetaObject::invokeMethod(mainWindow_, "onClearScreenAction",
             Qt::QueuedConnection);
     });
+
+    // qshell.screen.waitForString(str, timeoutSeconds)
+    // 返回: true=找到, false=超时
+    screen.set_function("waitForString", [this](const std::string& str, int timeoutSeconds) -> bool {
+        isWaitForString_ = true;
+        waitForString_ = QString::fromStdString(str);
+        findWaitForString_ = false;
+        auto currentSession = mainWindow_->getCurrentSession();
+        QObject::connect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
+        auto endTime = std::chrono::steady_clock::now()
+                          + std::chrono::milliseconds(static_cast<int>(timeoutSeconds * 1000));
+
+            // 分段 sleep，每 100ms 检查一次停止标志
+            while (std::chrono::steady_clock::now() < endTime) {
+                if (gShouldStop.load()) {
+                    throw std::runtime_error("interrupted during sleep");
+                }
+
+                if (findWaitForString_) {
+                    isWaitForString_ = false;
+                    QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
+                    return true;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+
+        QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
+        return false; // 超时
+    });
 }
 
 bool LuaScriptEngine::executeScript(const QString& scriptPath)
@@ -159,4 +189,12 @@ void LuaScriptEngine::stopScript()
 {
     qDebug() << "stopScript";
     gShouldStop = true;
+}
+
+void LuaScriptEngine::onDisplayOutput(const QString &line) {
+    if (isWaitForString_) {
+        if (line.contains(waitForString_)) {
+            findWaitForString_ = true;
+        }
+    }
 }
