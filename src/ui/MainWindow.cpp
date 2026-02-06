@@ -14,10 +14,12 @@
 #include "ui/terminal/SerialTerminal.h"
 
 #include <QApplication>
+#include <QDesktopServices>
 #include <QDockWidget>
 #include <QFileDialog>
 #include <QKeyEvent>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QSettings>
 #include <QThread>
 #include <utility>
@@ -265,6 +267,13 @@ void MainWindow::initActions() {
     stopScriptAction_ = new QAction(tr("Stop Script"), this);
     stopScriptAction_->setEnabled(false);
     connect(stopScriptAction_, &QAction::triggered, this, &MainWindow::onStopScriptAction);
+
+    // Help actions
+    docAction_ = new QAction(tr("Documentation"), this);
+    connect(docAction_, &QAction::triggered, this, &MainWindow::onDocAction);
+
+    aboutAction_ = new QAction(tr("About"), this);
+    connect(aboutAction_, &QAction::triggered, this, &MainWindow::onAboutAction);
 }
 
 void MainWindow::initMenu() {
@@ -307,6 +316,9 @@ void MainWindow::initMenu() {
 
     helpMenu_ = new QMenu(tr("Help"), mainMenuBar_);
     mainMenuBar_->addAction(helpMenu_->menuAction());
+    helpMenu_->addAction(docAction_);
+    helpMenu_->addSeparator();
+    helpMenu_->addAction(aboutAction_);
 }
 
 void MainWindow::initToolbar() {
@@ -678,3 +690,19 @@ void MainWindow::updateRecentScriptsMenu() {
         updateRecentScriptsMenu();
     });
 }
+
+// 在文件末尾添加槽函数实现
+void MainWindow::onDocAction() {
+    QDesktopServices::openUrl(QUrl("https://github.com/qiushao/qshell"));  // 替换为实际文档地址
+}
+
+void MainWindow::onAboutAction() {
+    QMessageBox::about(this, tr("关于"),
+        tr("<h3>%1</h3>"
+           "<p>版本: %2</p>"
+           "<p>%3</p>")
+        .arg(QCoreApplication::applicationName())
+        .arg(QCoreApplication::applicationVersion())
+        .arg("Copyright © 2026 qiushao"));
+}
+

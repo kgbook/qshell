@@ -63,6 +63,17 @@ int main(int argc, char *argv[])
     qDebug() << "style list:" << QStyleFactory::keys();
     luatest();
     QApplication::setStyle(QStyleFactory::create("Fusion"));
+
+    // 设置应用信息
+    QCoreApplication::setApplicationName("qshell");
+    QCoreApplication::setApplicationVersion("1.0.3");
+    QCoreApplication::setOrganizationName("qiushao");
+    QCoreApplication::setOrganizationDomain("https://github.com/qiushao/qshell");
+
+    // 读取版本信息
+    QString version = QCoreApplication::applicationVersion();
+    qDebug() << "Version:" << version;
+
     MainWindow w;
     w.show();
     return QApplication::exec();

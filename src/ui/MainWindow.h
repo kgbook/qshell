@@ -50,6 +50,10 @@ private slots:
     static void onStopScriptAction();
     void onRecentScriptTriggered();
 
+    // Help menu slots
+    static void onDocAction();
+    void onAboutAction();
+
 private:
     void initIcons();
     void initActions();
@@ -121,6 +125,10 @@ private:
     QMenu *recentScriptMenu_ = nullptr;
     QStringList recentScripts_;
     static constexpr int MaxRecentScripts = 10;
+
+    // Help actions
+    QAction *docAction_ = nullptr;
+    QAction *aboutAction_ = nullptr;
 
     // session table
     BaseTerminal *currentTab_ = nullptr;

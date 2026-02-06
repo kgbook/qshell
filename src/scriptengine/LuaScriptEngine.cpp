@@ -52,10 +52,6 @@ void LuaScriptEngine::registerAppModule(sol::table& qshell) const {
         QThread::msleep(ms);
     });
 
-    // qshell.app.IsRunning() -> bool
-    app.set_function("IsRunning", [this]() {
-        return running_.load();
-    });
 }
 
 // ========== qshell.session 模块 ==========
