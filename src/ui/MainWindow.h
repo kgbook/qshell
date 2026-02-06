@@ -10,6 +10,7 @@ class CommandButtonBar;
 class CommandWindow;
 class BaseTerminal;
 class CollapsibleDockWidget;
+class LuaScriptEngine;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -141,6 +142,8 @@ private:
     bool isFullscreen_ = false;
     QWidget *fullscreenWidget_ = nullptr;
     QShortcut *escShortcut_ = nullptr;
+
+    LuaScriptEngine *luaEngine_ = nullptr;
 };
 
 #endif // QSHELL_MAINWINDOW_H

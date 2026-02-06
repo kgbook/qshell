@@ -19,6 +19,8 @@ set(SRC_FILES main.cpp
         ui/command/CommandHistoryDialog.cpp
         ui/command/CommandWindow.cpp
         ui/command/CommandButtonBar.cpp
+        scriptengine/LuaScriptEngine.cpp
+        scriptengine/ScriptRunner.cpp
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")

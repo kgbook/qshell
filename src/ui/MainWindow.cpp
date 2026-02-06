@@ -2,6 +2,8 @@
 #include "SettingDialog.h"
 #include "command/CommandButtonBar.h"
 #include "core/ConfigManager.h"
+#include "scriptengine/LuaScriptEngine.h"
+#include "scriptengine/ScriptRunner.h"
 #include "session/CollapsibleDockWidget.h"
 #include "session/SessionTabWidget.h"
 #include "session/SessionTreeWidget.h"
@@ -17,6 +19,8 @@
 #include <QKeyEvent>
 #include <QMenuBar>
 #include <QSettings>
+#include <QThread>
+#include <utility>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent) {
@@ -604,8 +608,13 @@ void MainWindow::onRecentScriptTriggered() {
 }
 
 void MainWindow::runScript(const QString &scriptPath) {
-    // TODO: 实现运行 Lua 脚本的逻辑
     qDebug() << "Running script:" << scriptPath;
+    if (luaEngine_ == nullptr) {
+        luaEngine_ = new LuaScriptEngine(this);
+    }
+    auto runner = new ScriptRunner(luaEngine_, scriptPath);
+    connect(runner, &QThread::finished, runner, &QObject::deleteLater);
+    runner->start();
 
     addRecentScript(scriptPath);
 }
