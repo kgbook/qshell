@@ -13,10 +13,11 @@ public:
 
     bool executeScript(const QString &scriptPath);
     bool executeCode(const QString &code);
-    void stopScript();
+    bool isRunning();
+    static void stopScript();
+
 
 signals:
-    void scriptOutput(const QString &message);
     void scriptError(const QString &error);
     void scriptFinished();
 

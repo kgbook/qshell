@@ -600,8 +600,7 @@ void MainWindow::onRunLuaScriptAction() {
 }
 
 void MainWindow::onStopScriptAction() {
-    // TODO: 实现停止脚本的逻辑
-    qDebug() << "Stop script requested";
+    LuaScriptEngine::stopScript();
 }
 
 void MainWindow::onRecentScriptTriggered() {
@@ -627,6 +626,18 @@ void MainWindow::runScript(const QString &scriptPath) {
     auto runner = new ScriptRunner(luaEngine_, scriptPath);
     connect(runner, &QThread::finished, runner, &QObject::deleteLater);
     runner->start();
+    stopScriptAction_->setEnabled(true);
+    runLuaScriptAction_->setEnabled(false);
+    QObject::connect(luaEngine_, &LuaScriptEngine::scriptFinished, this, [this]() {
+        qDebug() << "Running script finished";
+        stopScriptAction_->setEnabled(false);
+        runLuaScriptAction_->setEnabled(true);
+    });
+    QObject::connect(luaEngine_, &LuaScriptEngine::scriptError, this, [this]() {
+        qDebug() << "Running script error";
+        stopScriptAction_->setEnabled(false);
+        runLuaScriptAction_->setEnabled(true);
+    });
 
     addRecentScript(scriptPath);
 }
