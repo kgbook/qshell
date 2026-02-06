@@ -40,7 +40,7 @@ void LuaScriptEngine::registerAPIs()
 
     // 注册各模块
     registerAppModule(qshell);
-    registerSessionModule(qshell);
+    registerScreenModule(qshell);
 }
 
 // ========== qshell 模块 ==========
@@ -82,22 +82,24 @@ void LuaScriptEngine::registerAppModule(sol::table& qshell) const {
 
 }
 
-// ========== qshell.session 模块 ==========
-void LuaScriptEngine::registerSessionModule(sol::table& qshell)
+// ========== qshell.screen 模块 ==========
+void LuaScriptEngine::registerScreenModule(sol::table& qshell)
 {
-    sol::table session = qshell.create_named("session");
+    sol::table screen = qshell.create_named("screen");
 
-    // qshell.session.getCurrentSession() -> Session object
-    session.set_function("getCurrentSession", [this]() {
-        return createSessionObject();
+    // qshell.screen.send(command) 发送指令
+    screen.set_function("send", [this](const std::string& command) {
+        auto qstr = QString::fromStdString(command);
+        QMetaObject::invokeMethod(mainWindow_, "onCommandSend",
+            Qt::QueuedConnection,
+            Q_ARG(QString, qstr));
     });
-}
 
-// ========== Session 对象创建 ==========
-sol::table LuaScriptEngine::createSessionObject()
-{
-    sol::table sessionObj = lua_.create_table();
-    return sessionObj;
+    // qshell.screen.clear() 清屏
+    screen.set_function("clear", [this]() {
+        QMetaObject::invokeMethod(mainWindow_, "onClearScreenAction",
+            Qt::QueuedConnection);
+    });
 }
 
 bool LuaScriptEngine::executeScript(const QString& scriptPath)
@@ -105,8 +107,8 @@ bool LuaScriptEngine::executeScript(const QString& scriptPath)
     running_ = true;
     try {
         auto result = lua_.script_file(scriptPath.toStdString());
-        emit running_ = false;
-        scriptFinished();
+        running_ = false;
+        emit scriptFinished();
         return result.valid();
     } catch (const sol::error& e) {
         running_ = false;

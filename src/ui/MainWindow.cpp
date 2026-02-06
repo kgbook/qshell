@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     QIcon windowIcon(":/images/application.png");
     setWindowIcon(windowIcon);
 
+    initLuaEngine();
     initIcons();
     initActions();
     initMenu();
@@ -40,6 +41,20 @@ MainWindow::MainWindow(QWidget *parent)
     initCommandWindow();
     initButtonBar();
     restoreLayoutState();
+}
+
+void MainWindow::initLuaEngine() {
+    luaEngine_ = new LuaScriptEngine(this);
+    QObject::connect(luaEngine_, &LuaScriptEngine::scriptFinished, this, [this]() {
+        qDebug() << "Running script finished";
+        stopScriptAction_->setEnabled(false);
+        runLuaScriptAction_->setEnabled(true);
+    });
+    QObject::connect(luaEngine_, &LuaScriptEngine::scriptError, this, [this]() {
+        qDebug() << "Running script error";
+        stopScriptAction_->setEnabled(false);
+        runLuaScriptAction_->setEnabled(true);
+    });
 }
 
 void MainWindow::initIcons() {
@@ -80,6 +95,10 @@ void MainWindow::showEvent(QShowEvent *event) {
         firstShow = false;
         QTimer::singleShot(100, this, &MainWindow::restoreLayoutState);
     }
+}
+
+BaseTerminal* MainWindow::getCurrentSession() {
+    return currentTab_;
 }
 
 void MainWindow::onOpenSession(const QString &sessionId) {
@@ -620,25 +639,11 @@ void MainWindow::onRecentScriptTriggered() {
 
 void MainWindow::runScript(const QString &scriptPath) {
     qDebug() << "Running script:" << scriptPath;
-    if (luaEngine_ == nullptr) {
-        luaEngine_ = new LuaScriptEngine(this);
-    }
     auto runner = new ScriptRunner(luaEngine_, scriptPath);
     connect(runner, &QThread::finished, runner, &QObject::deleteLater);
     runner->start();
     stopScriptAction_->setEnabled(true);
     runLuaScriptAction_->setEnabled(false);
-    QObject::connect(luaEngine_, &LuaScriptEngine::scriptFinished, this, [this]() {
-        qDebug() << "Running script finished";
-        stopScriptAction_->setEnabled(false);
-        runLuaScriptAction_->setEnabled(true);
-    });
-    QObject::connect(luaEngine_, &LuaScriptEngine::scriptError, this, [this]() {
-        qDebug() << "Running script error";
-        stopScriptAction_->setEnabled(false);
-        runLuaScriptAction_->setEnabled(true);
-    });
-
     addRecentScript(scriptPath);
 }
 

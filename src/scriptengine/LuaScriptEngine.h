@@ -24,8 +24,7 @@ signals:
 private:
     void registerAPIs();
     void registerAppModule(sol::table &qshell) const;
-    void registerSessionModule(sol::table &qshell);
-    sol::table createSessionObject();
+    void registerScreenModule(sol::table &qshell);
 
     sol::state lua_;
     MainWindow *mainWindow_ = nullptr;

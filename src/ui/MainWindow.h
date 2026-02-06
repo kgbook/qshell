@@ -55,6 +55,7 @@ private slots:
     void onAboutAction();
 
 private:
+    void initLuaEngine();
     void initIcons();
     void initActions();
     void initMenu();
