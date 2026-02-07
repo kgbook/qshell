@@ -150,6 +150,59 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
         QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
         return false; // 超时
     });
+
+    // qshell.screen.waitForRegexp(pattern, timeoutSeconds)
+    // 返回: true=匹配成功, false=超时
+    // 示例: qshell.screen.waitForRegexp("\\$\\s*$", 10)  -- 等待 shell 提示符
+    screen.set_function("waitForRegexp", [this](const std::string& pattern, int timeoutSeconds) -> bool {
+        isWaitForRegexp_ = true;
+        waitForRegexp_ = QRegularExpression(QString::fromStdString(pattern));
+        findWaitForRegexp_ = false;
+        lastRegexpMatch_.clear();
+
+        // 检查正则表达式是否有效
+        if (!waitForRegexp_.isValid()) {
+            qWarning() << "Invalid regexp pattern:" << waitForRegexp_.errorString();
+            isWaitForRegexp_ = false;
+            return false;
+        }
+
+        auto currentSession = mainWindow_->getCurrentSession();
+        QObject::connect(currentSession, &QTermWidget::onNewLine,
+                         this, &LuaScriptEngine::onDisplayOutput);
+
+        auto endTime = std::chrono::steady_clock::now()
+                          + std::chrono::milliseconds(static_cast<int>(timeoutSeconds * 1000));
+
+        while (std::chrono::steady_clock::now() < endTime) {
+            if (gShouldStop.load()) {
+                isWaitForRegexp_ = false;
+                QObject::disconnect(currentSession, &QTermWidget::onNewLine,
+                                   this, &LuaScriptEngine::onDisplayOutput);
+                throw std::runtime_error("interrupted during waitForRegexp");
+            }
+
+            if (findWaitForRegexp_) {
+                isWaitForRegexp_ = false;
+                QObject::disconnect(currentSession, &QTermWidget::onNewLine,
+                                   this, &LuaScriptEngine::onDisplayOutput);
+                return true;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
+        isWaitForRegexp_ = false;
+        QObject::disconnect(currentSession, &QTermWidget::onNewLine,
+                           this, &LuaScriptEngine::onDisplayOutput);
+        return false; // 超时
+    });
+
+    // 可选：获取最后一次正则匹配的内容
+    screen.set_function("getLastMatch", [this]() -> std::string {
+        return lastRegexpMatch_.toStdString();
+    });
+
+
 }
 
 bool LuaScriptEngine::executeScript(const QString& scriptPath)
@@ -195,6 +248,15 @@ void LuaScriptEngine::onDisplayOutput(const QString &line) {
     if (isWaitForString_) {
         if (line.contains(waitForString_)) {
             findWaitForString_ = true;
+        }
+    }
+
+    // 处理正则表达式匹配
+    if (isWaitForRegexp_) {
+        QRegularExpressionMatch match = waitForRegexp_.match(line);
+        if (match.hasMatch()) {
+            findWaitForRegexp_ = true;
+            lastRegexpMatch_ = match.captured(0);  // 保存匹配内容
         }
     }
 }

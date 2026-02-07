@@ -2,6 +2,7 @@
 #pragma once
 #include <QObject>
 #include <QString>
+#include <QRegularExpression>
 #include <sol/sol.hpp>
 
 class MainWindow;
@@ -33,4 +34,10 @@ private:
     bool isWaitForString_ = false;
     bool findWaitForString_ = false;
     QString waitForString_;
+
+    // 新增 waitForRegexp 相关变量
+    bool isWaitForRegexp_ = false;
+    QRegularExpression waitForRegexp_;
+    bool findWaitForRegexp_ = false;
+    QString lastRegexpMatch_;  // 可选：保存最后匹配的内容
 };
