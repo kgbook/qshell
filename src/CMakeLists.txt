@@ -55,14 +55,6 @@ target_link_libraries(qshell
         sol2
 )
 
-if(APPLE)
-    target_compile_definitions(qshell PRIVATE
-            SOL_ALL_SAFETIES_ON=1
-            SOL_STD_VARIANT=1
-            TL_OPTIONAL_NO_CONSTRR=1
-    )
-endif()
-
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "$ENV{Qt6_DIR}/bin")
     # 编译后执行 windeployqt
