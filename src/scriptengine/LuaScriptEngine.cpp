@@ -8,6 +8,7 @@
 
 #include <QCoreApplication>
 #include <QMessageBox>
+#include <QInputDialog>
 #include <thread>
 
 // 全局停止标志（线程安全）
@@ -56,6 +57,30 @@ void LuaScriptEngine::registerAppModule(sol::table& qshell) const {
         }, Qt::BlockingQueuedConnection);
     });
 
+    // qshell.input(prompt, [defaultValue], [title])
+    // 弹出输入对话框，返回用户输入的字符串
+    // 如果用户点击取消，返回空字符串
+    qshell.set_function("input", [this](const std::string& prompt,
+                                         sol::optional<std::string> defaultValue,
+                                         sol::optional<std::string> title) -> std::string {
+        QString qprompt = QString::fromStdString(prompt);
+        QString qdefault = defaultValue ? QString::fromStdString(defaultValue.value()) : QString();
+        QString qtitle = title ? QString::fromStdString(title.value()) : "Script Input";
+        QString result;
+        bool ok = false;
+
+        // 在主线程中显示输入对话框
+        QMetaObject::invokeMethod(mainWindow_, [qtitle, qprompt, qdefault, &result, &ok]() {
+            result = QInputDialog::getText(nullptr, qtitle, qprompt,
+                                           QLineEdit::Normal, qdefault, &ok);
+        }, Qt::BlockingQueuedConnection);
+
+        // 用户点击取消时返回空字符串
+        if (!ok) {
+            return "";
+        }
+        return result.toStdString();
+    });
 
     // qshell.log(msg)
     qshell.set_function("log", [](const std::string& msg) {
