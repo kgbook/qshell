@@ -9,6 +9,7 @@
 - 日记保存
 - Button Bar
 - Command Window
+- Lua script engine
 
 ![screen shot](./docs/screenshot/qshell-screenshot.png)
 
@@ -19,6 +20,10 @@
 
 ## 编译运行
 请参考 [BUILD.md](./BUILD.md)
+
+
+## Lua script engine
+请参考 [LuaScriptEngine](./docs/LuaScriptEngine.md)
 
 ## 感谢
 本项目代码引用或部份参考或依赖了以下开源项目，并在此表示感谢。
