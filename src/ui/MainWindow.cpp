@@ -345,7 +345,7 @@ void MainWindow::onSettingsAction() {
 }
 
 void MainWindow::onConnectAction() {
-    if (currentTab_ == nullptr) {
+    if (currentTab_ == nullptr || currentTab_->isConnect()) {
         return;
     }
 
@@ -359,7 +359,7 @@ void MainWindow::onConnectAction() {
 }
 
 void MainWindow::onDisconnectAction() const {
-    if (currentTab_ == nullptr) {
+    if (currentTab_ == nullptr || !currentTab_->isConnect()) {
         return;
     }
 
@@ -794,7 +794,7 @@ bool MainWindow::openSessionById(const QString &sessionId) {
     }
 
     terminal->connect();
-    connect(terminal, &BaseTerminal::onSessionError, this, &MainWindow::onSessionError);
+    QObject::connect(terminal, &BaseTerminal::onSessionError, this, &MainWindow::onSessionError);
     tabWidget_->addTab(terminal, *connectStateIcon_, session.name);
     tabWidget_->setCurrentWidget(terminal);
     terminal->setFocus();

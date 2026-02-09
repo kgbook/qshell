@@ -259,8 +259,8 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
         }, Qt::BlockingQueuedConnection);
     });
 
-    //切换到 sessionName 的 tag
-    session.set_function("switchToTab", [this](const std::string& sessionName) -> bool {
+    //切换到 tabName 的 tab
+    session.set_function("switchToTab", [this](const std::string& tabName) -> bool {
         int tabCount = mainWindow_->tabCount();
         for (int i = 0; i < tabCount; i++) {
             auto currentSession = mainWindow_->getCurrentSession();
@@ -268,7 +268,7 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
                 return false;
             }
 
-            if (currentSession->getSessionName() == QString::fromStdString(sessionName)) {
+            if (currentSession->getSessionName() == QString::fromStdString(tabName)) {
                 return true;
             }
             QMetaObject::invokeMethod(mainWindow_, [this]() {
@@ -277,6 +277,18 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
             std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
         return false;
+    });
+
+    // qshell.session.connect() 连接
+    session.set_function("connect", [this]() {
+        QMetaObject::invokeMethod(mainWindow_, "onConnectAction",
+            Qt::BlockingQueuedConnection);
+    });
+
+    // qshell.session.disconnect() 连接
+    session.set_function("disconnect", [this]() {
+        QMetaObject::invokeMethod(mainWindow_, "onDisconnectAction",
+            Qt::BlockingQueuedConnection);
     });
 }
 
