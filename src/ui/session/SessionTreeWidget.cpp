@@ -213,7 +213,7 @@ void SessionTreeWidget::onCustomContextMenu(const QPoint &pos) {
 
         // 检查是否可以上移/下移
         auto config = ConfigManager::instance();
-        SessionData session = config->session(sessionId);
+        SessionData session = config->sessionById(sessionId);
         QList<SessionData> sessions = config->sessions();
 
         // 找到同组的会话
@@ -264,7 +264,7 @@ void SessionTreeWidget::createNewGroup() {
 }
 
 void SessionTreeWidget::editSession(const QString &sessionId) {
-    SessionData session = ConfigManager::instance()->session(sessionId);
+    SessionData session = ConfigManager::instance()->sessionById(sessionId);
     if (session.id.isEmpty()) return;
 
     SessionEditDialog dialog(this);
@@ -275,7 +275,7 @@ void SessionTreeWidget::editSession(const QString &sessionId) {
 }
 
 void SessionTreeWidget::deleteSession(const QString &sessionId) {
-    SessionData session = ConfigManager::instance()->session(sessionId);
+    SessionData session = ConfigManager::instance()->sessionById(sessionId);
     if (session.id.isEmpty()) return;
 
     QMessageBox::StandardButton result = QMessageBox::question(
@@ -450,7 +450,7 @@ void SessionTreeWidget::dropEvent(QDropEvent *event) {
 
 void SessionTreeWidget::handleSessionDrop(const QString &sessionId, QTreeWidgetItem *dropTarget, int dropIndex) {
     auto config = ConfigManager::instance();
-    SessionData session = config->session(sessionId);
+    SessionData session = config->sessionById(sessionId);
     if (session.id.isEmpty()) return;
 
     QString newGroupId;
@@ -463,7 +463,7 @@ void SessionTreeWidget::handleSessionDrop(const QString &sessionId, QTreeWidgetI
             newGroupId = dropTarget->data(0, ItemIdRole).toString();
         } else if (targetType == SessionItem) {
             // 拖到会话上，获取该会话的分组
-            SessionData targetSession = config->session(dropTarget->data(0, ItemIdRole).toString());
+            SessionData targetSession = config->sessionById(dropTarget->data(0, ItemIdRole).toString());
             newGroupId = targetSession.groupId;
         }
     }

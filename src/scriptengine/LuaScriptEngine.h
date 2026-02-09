@@ -26,6 +26,7 @@ private:
     void registerAPIs();
     void registerAppModule(sol::table &qshell) const;
     void registerScreenModule(sol::table &qshell);
+    void registerSessionModule(sol::table &qshell);
     void onDisplayOutput(const QString &line);
 
     sol::state lua_;

@@ -11,7 +11,8 @@
 enum class ProtocolType {
     LocalShell,
     SSH,
-    Serial
+    Serial,
+    UNKNOWN
 };
 
 // SSH认证方式
@@ -123,7 +124,7 @@ struct SessionData {
     QString id;
     QString name;
     QString groupId;  // 空表示在根级别
-    ProtocolType protocolType = ProtocolType::LocalShell;
+    ProtocolType protocolType = ProtocolType::UNKNOWN;
     SSHConfig sshConfig;
     SerialConfig serialConfig;
     int sortOrder = 0;  // 排序顺序

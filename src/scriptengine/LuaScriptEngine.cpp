@@ -43,6 +43,7 @@ void LuaScriptEngine::registerAPIs()
     // 注册各模块
     registerAppModule(qshell);
     registerScreenModule(qshell);
+    registerSessionModule(qshell);
 }
 
 // ========== qshell 模块 ==========
@@ -227,6 +228,20 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
         return lastRegexpMatch_.toStdString();
     });
 
+
+}
+
+void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
+    sol::table session = qshell.create_named("session");
+
+    // 打开会话
+    session.set_function("openSessionByName", [this](const std::string& sessionName) -> bool {
+        bool ok = false;
+        QMetaObject::invokeMethod(mainWindow_, [this, sessionName, &ok]() {
+            ok = mainWindow_->openSessionByName(sessionName.data());
+        }, Qt::BlockingQueuedConnection);
+        return ok;
+    });
 
 }
 

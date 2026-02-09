@@ -19,7 +19,8 @@ public:
     
     // 会话管理
     QList<SessionData> sessions() const;
-    SessionData session(const QString& id) const;
+    SessionData sessionById(const QString& id) const;
+    SessionData sessionByName(const QString& name) const;
     void addSession(const SessionData& session);
     void updateSession(const SessionData& session);
     void removeSession(const QString& id);

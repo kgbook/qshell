@@ -154,8 +154,21 @@ QList<SessionData> ConfigManager::sessions() const {
     return result;
 }
 
-SessionData ConfigManager::session(const QString& id) const {
+SessionData ConfigManager::sessionById(const QString& id) const {
     return sessions_.value(id);
+}
+
+SessionData ConfigManager::sessionByName(const QString &name) const {
+    QList<SessionData> result = sessions_.values();
+    for (const SessionData &session : result) {
+        if (session.name == name) {
+            return session;
+        }
+    }
+
+    SessionData session;
+    session.id = "";
+    return session;
 }
 
 void ConfigManager::addSession(const SessionData& session) {

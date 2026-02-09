@@ -98,26 +98,7 @@ void MainWindow::showEvent(QShowEvent *event) {
 }
 
 void MainWindow::onOpenSession(const QString &sessionId) {
-    auto session = ConfigManager::instance()->session(sessionId);
-    BaseTerminal *terminal = nullptr;
-
-    if (session.protocolType == ProtocolType::Serial) {
-        terminal = new SerialTerminal(session, this);
-    } else if (session.protocolType == ProtocolType::LocalShell) {
-        terminal = new LocalTerminal(this);
-    } else if (session.protocolType == ProtocolType::SSH) {
-        terminal = new SSHTerminal(session, this);
-    } else {
-        qDebug() << "unknown session type!!";
-        return;
-    }
-
-    terminal->connect();
-    connect(terminal, &BaseTerminal::onSessionError, this, &MainWindow::onSessionError);
-    tabWidget_->addTab(terminal, *connectStateIcon_, session.name);
-    tabWidget_->setCurrentWidget(terminal);
-    terminal->setFocus();
-    qDebug() << "onOpenSession" << session.name;
+    openSessionById(sessionId);
 }
 
 void MainWindow::onSessionError(BaseTerminal *terminal) const {
@@ -795,6 +776,38 @@ QString MainWindow::getScreenText() const
         if (col2 < 0) col2 = 0;
         return currentTab_->screenGet(0, 0, row2, col2, 2);
     } else { return ""; }
+}
+
+bool MainWindow::openSessionById(const QString &sessionId) {
+    auto session = ConfigManager::instance()->sessionById(sessionId);
+    BaseTerminal *terminal = nullptr;
+
+    if (session.protocolType == ProtocolType::Serial) {
+        terminal = new SerialTerminal(session, this);
+    } else if (session.protocolType == ProtocolType::LocalShell) {
+        terminal = new LocalTerminal(this);
+    } else if (session.protocolType == ProtocolType::SSH) {
+        terminal = new SSHTerminal(session, this);
+    } else {
+        qDebug() << "unknown session type!!";
+        return false;
+    }
+
+    terminal->connect();
+    connect(terminal, &BaseTerminal::onSessionError, this, &MainWindow::onSessionError);
+    tabWidget_->addTab(terminal, *connectStateIcon_, session.name);
+    tabWidget_->setCurrentWidget(terminal);
+    terminal->setFocus();
+    qDebug() << "onOpenSession" << session.name;
+    return true;
+}
+
+bool MainWindow::openSessionByName(const QString &sessionName) {
+    auto session = ConfigManager::instance()->sessionByName(sessionName);
+    if (session.id.isEmpty() || session.protocolType == ProtocolType::UNKNOWN) {
+        return false;
+    }
+    return openSessionById(session.id);
 }
 
 BaseTerminal * MainWindow::getCurrentSession() const {
