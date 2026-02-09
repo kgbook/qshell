@@ -122,6 +122,10 @@ QString BaseTerminal::logFilePath() const {
     return logFilePath_;
 }
 
+QString BaseTerminal::getSessionName() const {
+    return sessionData_.name;
+}
+
 void BaseTerminal::onDisplayOutput(const QString &line) {
     // 如果正在记录日志，写入数据
     if (logging_ && logFile_ && logFile_->isOpen()) {

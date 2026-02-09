@@ -22,6 +22,8 @@ public:
     Q_INVOKABLE QString getScreenText() const;
     Q_INVOKABLE bool openSessionById(const QString& sessionId);
     Q_INVOKABLE bool openSessionByName(const QString& sessionName);
+    Q_INVOKABLE int tabCount() const;
+    Q_INVOKABLE void nextTab() const;
     BaseTerminal* getCurrentSession() const;
 
 private slots:

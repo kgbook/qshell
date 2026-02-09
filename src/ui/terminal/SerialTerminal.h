@@ -15,7 +15,6 @@ public:
 private:
     void handleError(QSerialPort::SerialPortError error);
     QSerialPort *serial_ = nullptr;
-    SessionData sessionData_;
 };
 
 

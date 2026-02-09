@@ -810,6 +810,20 @@ bool MainWindow::openSessionByName(const QString &sessionName) {
     return openSessionById(session.id);
 }
 
+int MainWindow::tabCount() const {
+    return tabWidget_->count();
+}
+
+void MainWindow::nextTab() const {
+    if (tabWidget_->count() < 2) {
+        return;
+    }
+
+    const int currentIndex = tabWidget_->currentIndex();
+    const int nextIndex = (currentIndex + 1) % tabWidget_->count();
+    tabWidget_->setCurrentIndex(nextIndex);
+}
+
 BaseTerminal * MainWindow::getCurrentSession() const {
     return currentTab_;
 }

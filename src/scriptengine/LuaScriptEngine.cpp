@@ -235,7 +235,7 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
     sol::table session = qshell.create_named("session");
 
     // 打开会话
-    session.set_function("openSessionByName", [this](const std::string& sessionName) -> bool {
+    session.set_function("open", [this](const std::string& sessionName) -> bool {
         bool ok = false;
         QMetaObject::invokeMethod(mainWindow_, [this, sessionName, &ok]() {
             ok = mainWindow_->openSessionByName(sessionName.data());
@@ -243,6 +243,41 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
         return ok;
     });
 
+    // 获取当前会话名
+    session.set_function("tabName", [this]() -> std::string {
+        auto currentSession = mainWindow_->getCurrentSession();
+        if (currentSession != nullptr) {
+            return currentSession->getSessionName().toStdString();
+        }
+        return "";
+    });
+
+    //切换到下一个 tab
+    session.set_function("nextTab", [this]() {
+        QMetaObject::invokeMethod(mainWindow_, [this]() {
+            mainWindow_->nextTab();
+        }, Qt::BlockingQueuedConnection);
+    });
+
+    //切换到 sessionName 的 tag
+    session.set_function("switchToTab", [this](const std::string& sessionName) -> bool {
+        int tabCount = mainWindow_->tabCount();
+        for (int i = 0; i < tabCount; i++) {
+            auto currentSession = mainWindow_->getCurrentSession();
+            if (currentSession == nullptr) {
+                return false;
+            }
+
+            if (currentSession->getSessionName() == QString::fromStdString(sessionName)) {
+                return true;
+            }
+            QMetaObject::invokeMethod(mainWindow_, [this]() {
+                mainWindow_->nextTab();
+            }, Qt::BlockingQueuedConnection);
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        }
+        return false;
+    });
 }
 
 bool LuaScriptEngine::executeScript(const QString& scriptPath)

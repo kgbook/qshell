@@ -2,6 +2,7 @@
 #define QSHELL_BASE_TERMINAL_H
 
 #include "qtermwidget.h"
+#include "core/datatype.h"
 #include <QFile>
 #include <QMenu>
 
@@ -23,6 +24,7 @@ public:
     // 日志相关方法
     bool isLogging() const;
     QString logFilePath() const;
+    QString getSessionName() const;
 
 signals:
     void onSessionError(BaseTerminal *terminal);
@@ -44,6 +46,7 @@ private:
     void writeToLog(const QString &line);
 
 protected:
+    SessionData sessionData_;
     QFont *font_ = nullptr;
     bool connect_ = false;
     IPtyProcess *localShell_ = nullptr;

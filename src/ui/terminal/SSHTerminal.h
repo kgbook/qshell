@@ -21,9 +21,6 @@ public:
     void connect() override;
     void disconnect() override;
 
-private:
-    SessionData sessionData_;
-
 #if defined(Q_CC_MSVC)
 private:
     bool createSocket();
