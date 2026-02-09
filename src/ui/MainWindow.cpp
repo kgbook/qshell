@@ -824,6 +824,21 @@ void MainWindow::nextTab() const {
     tabWidget_->setCurrentIndex(nextIndex);
 }
 
+bool MainWindow::switchToTab(const QString &tabName) const {
+    auto tabCount = tabWidget_->count();
+    if (tabCount < 2) {
+        return true;
+    }
+    for (int i = 0; i < tabCount; i++) {
+        auto title = tabWidget_->tabText(i);
+        if (title == tabName) {
+            tabWidget_->setCurrentIndex(i);
+            return true;
+        }
+    }
+    return false;
+}
+
 BaseTerminal * MainWindow::getCurrentSession() const {
     return currentTab_;
 }

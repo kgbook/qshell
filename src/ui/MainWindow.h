@@ -24,6 +24,7 @@ public:
     Q_INVOKABLE bool openSessionByName(const QString& sessionName);
     Q_INVOKABLE int tabCount() const;
     Q_INVOKABLE void nextTab() const;
+    Q_INVOKABLE bool switchToTab(const QString& tabName) const;
     BaseTerminal* getCurrentSession() const;
 
 private slots:

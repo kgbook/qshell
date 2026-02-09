@@ -118,7 +118,7 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
     screen.set_function("sendText", [this](const std::string& command) {
         auto qstr = QString::fromStdString(command);
         QMetaObject::invokeMethod(mainWindow_, "onCommandSend",
-            Qt::QueuedConnection,
+            Qt::BlockingQueuedConnection,
             Q_ARG(QString, qstr));
     });
 
@@ -129,7 +129,7 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
     screen.set_function("sendKey", [this](const std::string& keyName) {
         QString qkey = QString::fromStdString(keyName);
         QMetaObject::invokeMethod(mainWindow_, "onSendKey",
-            Qt::QueuedConnection,
+            Qt::BlockingQueuedConnection,
             Q_ARG(QString, qkey));
     });
 
@@ -145,7 +145,7 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
     // qshell.screen.clear() 清屏
     screen.set_function("clear", [this]() {
         QMetaObject::invokeMethod(mainWindow_, "onClearScreenAction",
-            Qt::QueuedConnection);
+            Qt::BlockingQueuedConnection);
     });
 
     // qshell.screen.waitForString(str, timeoutSeconds)
@@ -261,22 +261,11 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
 
     //切换到 tabName 的 tab
     session.set_function("switchToTab", [this](const std::string& tabName) -> bool {
-        int tabCount = mainWindow_->tabCount();
-        for (int i = 0; i < tabCount; i++) {
-            auto currentSession = mainWindow_->getCurrentSession();
-            if (currentSession == nullptr) {
-                return false;
-            }
-
-            if (currentSession->getSessionName() == QString::fromStdString(tabName)) {
-                return true;
-            }
-            QMetaObject::invokeMethod(mainWindow_, [this]() {
-                mainWindow_->nextTab();
-            }, Qt::BlockingQueuedConnection);
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        }
-        return false;
+        bool ok = false;
+        QMetaObject::invokeMethod(mainWindow_, [this, tabName, &ok]() {
+            ok = mainWindow_->switchToTab(tabName.data());
+        }, Qt::BlockingQueuedConnection);
+        return ok;
     });
 
     // qshell.session.connect() 连接
@@ -332,6 +321,7 @@ void LuaScriptEngine::stopScript()
 }
 
 void LuaScriptEngine::onDisplayOutput(const QString &line) {
+    // qDebug() << "onDisplayOutput:" << line;
     if (isWaitForString_) {
         if (line.contains(waitForString_)) {
             findWaitForString_ = true;
