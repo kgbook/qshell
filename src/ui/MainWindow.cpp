@@ -770,11 +770,7 @@ void MainWindow::onSendKey(const QString& keyName)
 QString MainWindow::getScreenText() const
 {
     if (currentTab_) {
-        int row2 = currentTab_->screenLinesCount() - 1;
-        int col2 = currentTab_->screenColumnsCount() - 1;
-        if (row2 < 0) row2 = 0;
-        if (col2 < 0) col2 = 0;
-        return currentTab_->screenGet(0, 0, row2, col2, 2);
+        return currentTab_->getScreenText();
     } else { return ""; }
 }
 

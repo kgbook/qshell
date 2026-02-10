@@ -822,8 +822,19 @@ void QTermWidget::setCursorY(int y) {
     m_terminalDisplay->setCursorY(y);
 }
 
-QString QTermWidget::screenGet(int row1, int col1, int row2, int col2, int mode) {
-    return m_terminalDisplay->screenGet(row1, col1, row2, col2, mode);
+QString QTermWidget::getScreenText() const {
+    QString result;
+    QTextStream stream(&result, QIODevice::ReadWrite);
+
+    PlainTextDecoder decoder;
+    decoder.begin(&stream);
+    auto imgSize = m_emulation->imageSize();
+    int end = m_emulation->lineCount();
+    int start = end - imgSize.height();
+    m_emulation->writeToStream(&decoder, start, end);
+    decoder.end();
+
+    return result;
 }
 
 void QTermWidget::setSelectionOpacity(qreal opacity) {

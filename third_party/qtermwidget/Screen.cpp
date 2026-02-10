@@ -848,50 +848,6 @@ int Screen::getCursorX() const { return cuX; }
 
 int Screen::getCursorY() const { return cuY; }
 
-QString Screen::getScreenText(int row1, int col1, int row2, int col2, int mode) {
-    Q_ASSERT(row1 >= 0 && row1 < lines);
-    Q_ASSERT(row2 >= 0 && row2 < lines);
-    Q_ASSERT(col1 >= 0 && col1 < columns);
-    Q_ASSERT(col2 >= 0 && col2 < columns);
-
-    QString text;
-    int startLine = qMin(row1, row2);
-    int endLine = qMax(row1, row2);
-    int startCol = qMin(col1, col2);
-    int endCol = qMax(col1, col2);
-
-    if (mode == 1) {
-        for (int i = startLine; i <= endLine; i++) {
-            if (screenLines->size() <= i)
-                break;
-            for (int j = startCol; j <= endCol; j++) {
-                if (screenLines[i].count() <= j)
-                    break;
-                wchar_t c = screenLines[i][j].character;
-                text += QChar(c);
-            }
-        }
-    } else if (mode == 2) {
-        for (int i = startLine; i <= endLine; i++) {
-            if (screenLines->size() <= i)
-                break;
-            int size = 0;
-            for (int j = startCol; j <= endCol; j++) {
-                if (screenLines[i].count() <= j)
-                    break;
-                wchar_t c = screenLines[i][j].character;
-                text += QChar(c);
-                size++;
-            }
-            if (size != 0) {
-                text += '\n';
-            }
-        }
-    }
-
-    return text;
-}
-
 void Screen::clearImage(int loca, int loce, char c) {
     int scr_TL = loc(0, history->getLines());
     // FIXME: check positions

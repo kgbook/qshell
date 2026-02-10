@@ -215,8 +215,6 @@ public:
      */
     QString selectedText( bool preserveLineBreaks ) const;
 
-    QString getScreenText(int row1, int col1, int row2, int col2, int mode);
-
 public slots:
     /**
      * Notifies the window that the contents of the associated terminal screen have changed.
