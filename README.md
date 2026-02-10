@@ -31,3 +31,4 @@
 - [libssh2](https://github.com/libssh2/libssh2)
 - [ptyqt](https://github.com/kafeg/ptyqt)
 - [utf8proc](https://github.com/JuliaStrings/utf8proc)
+- [Lua](https://www.lua.org/)

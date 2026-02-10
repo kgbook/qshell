@@ -4,6 +4,9 @@
 #include <QString>
 #include <QRegularExpression>
 #include <sol/sol.hpp>
+#include <chrono>
+#include <vector>
+#include <mutex>
 
 class MainWindow;
 
@@ -17,17 +20,21 @@ public:
     bool isRunning();
     static void stopScript();
 
-
-signals:
-    void scriptError(const QString &error);
+    signals:
+        void scriptError(const QString &error);
     void scriptFinished();
 
 private:
     void registerAPIs();
-    void registerAppModule(sol::table &qshell) const;
+    void registerAppModule(sol::table &qshell);
     void registerScreenModule(sol::table &qshell);
     void registerSessionModule(sol::table &qshell);
+    void registerTimerModule(sol::table &qshell);  // 新增
     void onDisplayOutput(const QString &line);
+
+    // 定时器处理
+    void processTimers();
+    void interruptibleSleep(int milliseconds);
 
     sol::state lua_;
     MainWindow *mainWindow_ = nullptr;
@@ -36,9 +43,22 @@ private:
     bool findWaitForString_ = false;
     QString waitForString_;
 
-    // 新增 waitForRegexp 相关变量
+    // waitForRegexp 相关变量
     bool isWaitForRegexp_ = false;
     QRegularExpression waitForRegexp_;
     bool findWaitForRegexp_ = false;
-    QString lastRegexpMatch_;  // 可选：保存最后匹配的内容
+    QString lastRegexpMatch_;
+
+    // Timer 模块相关
+    struct TimerInfo {
+        int id;
+        std::chrono::steady_clock::time_point nextTrigger;
+        int intervalMs;  // 0 = 单次定时器, >0 = 重复定时器
+        sol::function callback;
+        bool active;
+    };
+
+    std::vector<TimerInfo> timers_;
+    std::mutex timersMutex_;
+    int nextTimerId_ = 1;
 };

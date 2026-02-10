@@ -1,3 +1,4 @@
+// LuaScriptEngine.cpp
 #include "LuaScriptEngine.h"
 #include <QThread>
 #include <QEventLoop>
@@ -10,6 +11,8 @@
 #include <QMessageBox>
 #include <QInputDialog>
 #include <thread>
+#include <algorithm>
+#include <utility>
 
 // 全局停止标志（线程安全）
 std::atomic<bool> gShouldStop{false};
@@ -17,7 +20,6 @@ std::atomic<bool> gShouldStop{false};
 // 钩子函数：每执行一定数量的指令就检查是否需要停止
 void interruptHook(lua_State* L, lua_Debug* ar) {
     if (gShouldStop.load()) {
-        // 抛出 Lua 错误来中断执行
         luaL_error(L, "Script execution interrupted by user");
     }
 }
@@ -29,38 +31,179 @@ LuaScriptEngine::LuaScriptEngine(MainWindow* mainWindow)
                          sol::lib::table, sol::lib::math,
                          sol::lib::os, sol::lib::io);
     registerAPIs();
-    // 设置钩子：每执行 1000 条指令检查一次
-    // LUA_MASKCOUNT - 按指令计数触发
-    // LUA_MASKLINE  - 每行触发（更精确但更慢）
     lua_sethook(lua_.lua_state(), interruptHook, LUA_MASKCOUNT, 1000);
 }
 
 void LuaScriptEngine::registerAPIs()
 {
-    // 创建顶层命名空间 qshell
     sol::table qshell = lua_.create_named_table("qshell");
 
-    // 注册各模块
     registerAppModule(qshell);
     registerScreenModule(qshell);
     registerSessionModule(qshell);
+    registerTimerModule(qshell);  // 注册 Timer 模块
+}
+
+// 可中断的 sleep，同时处理定时器
+void LuaScriptEngine::interruptibleSleep(int milliseconds)
+{
+    auto endTime = std::chrono::steady_clock::now() 
+                   + std::chrono::milliseconds(milliseconds);
+
+    while (std::chrono::steady_clock::now() < endTime) {
+        if (gShouldStop.load()) {
+            throw std::runtime_error("interrupted during sleep");
+        }
+        
+        // 处理定时器回调
+        processTimers();
+        
+        // 计算剩余等待时间，最多等待 50ms
+        auto remaining = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - std::chrono::steady_clock::now()).count();
+        auto sleepTime = std::min<long>(50L, remaining);
+        if (sleepTime > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
+        }
+    }
+    
+    // 最后再处理一次定时器
+    processTimers();
+}
+
+// 处理所有到期的定时器
+void LuaScriptEngine::processTimers()
+{
+    std::lock_guard<std::mutex> lock(timersMutex_);
+    
+    auto now = std::chrono::steady_clock::now();
+    
+    for (auto& timer : timers_) {
+        if (!timer.active) continue;
+        
+        if (now >= timer.nextTrigger) {
+            // 执行回调
+            try {
+                if (timer.callback.valid()) {
+                    timer.callback();
+                }
+            } catch (const sol::error& e) {
+                qWarning() << "Timer callback error:" << e.what();
+            }
+            
+            if (timer.intervalMs > 0) {
+                // 重复定时器：更新下次触发时间
+                timer.nextTrigger = now + std::chrono::milliseconds(timer.intervalMs);
+            } else {
+                // 单次定时器：标记为非活动
+                timer.active = false;
+            }
+        }
+    }
+    
+    // 清理已完成的单次定时器
+    timers_.erase(
+        std::remove_if(timers_.begin(), timers_.end(),
+            [](const TimerInfo& t) { return !t.active; }),
+        timers_.end()
+    );
+}
+
+// ========== qshell.timer 模块 ==========
+void LuaScriptEngine::registerTimerModule(sol::table& qshell)
+{
+    sol::table timer = qshell.create_named("timer");
+
+    // qshell.timer.setTimeout(callback, delayMs)
+    // 创建单次定时器，返回 timerId
+    // 示例: local id = qshell.timer.setTimeout(function() print("timeout!") end, 1000)
+    timer.set_function("setTimeout", [this](sol::function callback, int delayMs) -> int {
+        std::lock_guard<std::mutex> lock(timersMutex_);
+        
+        int id = nextTimerId_++;
+        TimerInfo info;
+        info.id = id;
+        info.nextTrigger = std::chrono::steady_clock::now() 
+                           + std::chrono::milliseconds(delayMs);
+        info.intervalMs = 0;  // 单次
+        info.callback = std::move(callback);
+        info.active = true;
+        
+        timers_.push_back(std::move(info));
+        return id;
+    });
+
+    // qshell.timer.setInterval(callback, intervalMs)
+    // 创建重复定时器，返回 timerId
+    // 示例: local id = qshell.timer.setInterval(function() print("tick") end, 500)
+    timer.set_function("setInterval", [this](sol::function callback, int intervalMs) -> int {
+        std::lock_guard<std::mutex> lock(timersMutex_);
+        
+        int id = nextTimerId_++;
+        TimerInfo info;
+        info.id = id;
+        info.nextTrigger = std::chrono::steady_clock::now() 
+                           + std::chrono::milliseconds(intervalMs);
+        info.intervalMs = intervalMs;  // 重复间隔
+        info.callback = std::move(callback);
+        info.active = true;
+        
+        timers_.push_back(std::move(info));
+        return id;
+    });
+
+    // qshell.timer.clear(timerId)
+    // 取消指定定时器
+    // 示例: qshell.timer.clear(id)
+    timer.set_function("clear", [this](int timerId) -> bool {
+        std::lock_guard<std::mutex> lock(timersMutex_);
+        
+        for (auto& timer : timers_) {
+            if (timer.id == timerId) {
+                timer.active = false;
+                return true;
+            }
+        }
+        return false;
+    });
+
+    // qshell.timer.clearAll()
+    // 取消所有定时器
+    timer.set_function("clearAll", [this]() {
+        std::lock_guard<std::mutex> lock(timersMutex_);
+        timers_.clear();
+    });
+
+    // qshell.timer.process()
+    // 手动处理所有到期的定时器回调
+    // 在长时间运行的循环中应定期调用此函数
+    timer.set_function("process", [this]() {
+        processTimers();
+    });
+
+    // qshell.timer.count()
+    // 返回当前活动定时器数量
+    timer.set_function("count", [this]() -> int {
+        std::lock_guard<std::mutex> lock(timersMutex_);
+        return static_cast<int>(timers_.size());
+    });
+
+    // qshell.timer.sleep(milliseconds)
+    // 可中断的 sleep，同时处理定时器回调
+    // 示例: qshell.timer.sleep(2000)  -- 睡眠2秒，期间定时器仍会触发
+    timer.set_function("sleep", [this](int milliseconds) {
+        interruptibleSleep(milliseconds);
+    });
 }
 
 // ========== qshell 模块 ==========
-void LuaScriptEngine::registerAppModule(sol::table& qshell) const {
-    // qshell.showMessage(msg)
+void LuaScriptEngine::registerAppModule(sol::table& qshell) {
     qshell.set_function("showMessage", [this](const std::string& msg) {
         QString qmsg = QString::fromStdString(msg);
-
-        // 在主线程中显示消息框
         QMetaObject::invokeMethod(mainWindow_, [qmsg]() {
             QMessageBox::information(nullptr, "Script Message", qmsg);
         }, Qt::BlockingQueuedConnection);
     });
 
-    // qshell.input(prompt, [defaultValue], [title])
-    // 弹出输入对话框，返回用户输入的字符串
-    // 如果用户点击取消，返回空字符串
     qshell.set_function("input", [this](const std::string& prompt,
                                          sol::optional<std::string> defaultValue,
                                          sol::optional<std::string> title) -> std::string {
@@ -70,43 +213,29 @@ void LuaScriptEngine::registerAppModule(sol::table& qshell) const {
         QString result;
         bool ok = false;
 
-        // 在主线程中显示输入对话框
         QMetaObject::invokeMethod(mainWindow_, [qtitle, qprompt, qdefault, &result, &ok]() {
             result = QInputDialog::getText(nullptr, qtitle, qprompt,
                                            QLineEdit::Normal, qdefault, &ok);
         }, Qt::BlockingQueuedConnection);
 
-        // 用户点击取消时返回空字符串
         if (!ok) {
             return "";
         }
         return result.toStdString();
     });
 
-    // qshell.log(msg)
     qshell.set_function("log", [](const std::string& msg) {
         qDebug() << QString::fromStdString(msg);
     });
 
-    // qshell.sleep(seconds)
-    qshell.set_function("sleep", [](int seconds) {
-        auto endTime = std::chrono::steady_clock::now()
-                          + std::chrono::milliseconds(static_cast<int>(seconds * 1000));
-
-            // 分段 sleep，每 100ms 检查一次停止标志
-            while (std::chrono::steady_clock::now() < endTime) {
-                if (gShouldStop.load()) {
-                    throw std::runtime_error("interrupted during sleep");
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
+    // 修改 sleep 使用可中断版本并处理定时器
+    qshell.set_function("sleep", [this](double seconds) {
+        interruptibleSleep(static_cast<int>(seconds * 1000));
     });
 
-    // qshell.getVersionStr()
     qshell.set_function("getVersionStr", []() {
         return QCoreApplication::applicationVersion().toStdString();
     });
-
 }
 
 // ========== qshell.screen 模块 ==========
@@ -114,7 +243,6 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
 {
     sol::table screen = qshell.create_named("screen");
 
-    // qshell.screen.sendText(command) 发送指令
     screen.set_function("sendText", [this](const std::string& command) {
         auto qstr = QString::fromStdString(command);
         QMetaObject::invokeMethod(mainWindow_, "onCommandSend",
@@ -122,10 +250,6 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
             Q_ARG(QString, qstr));
     });
 
-    // qshell.screen.sendKey(keyName) 发送特殊按键
-    // 支持: "Enter", "Tab", "Escape", "Backspace", "Delete",
-    //       "Up", "Down", "Left", "Right", "Home", "End",
-    //       "PageUp", "PageDown", "F1"-"F12", "Ctrl+C" 等
     screen.set_function("sendKey", [this](const std::string& keyName) {
         QString qkey = QString::fromStdString(keyName);
         QMetaObject::invokeMethod(mainWindow_, "onSendKey",
@@ -133,7 +257,6 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
             Q_ARG(QString, qkey));
     });
 
-    // qshell.screen.getScreenText() 获取当前屏幕文本
     screen.set_function("getScreenText", [this]() -> std::string {
         QString text;
         QMetaObject::invokeMethod(mainWindow_, "getScreenText",
@@ -142,51 +265,51 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
         return text.toStdString();
     });
 
-    // qshell.screen.clear() 清屏
     screen.set_function("clear", [this]() {
         QMetaObject::invokeMethod(mainWindow_, "onClearScreenAction",
             Qt::BlockingQueuedConnection);
     });
 
-    // qshell.screen.waitForString(str, timeoutSeconds)
-    // 返回: true=找到, false=超时
+    // 修改 waitForString 以支持定时器
     screen.set_function("waitForString", [this](const std::string& str, int timeoutSeconds) -> bool {
         isWaitForString_ = true;
         waitForString_ = QString::fromStdString(str);
         findWaitForString_ = false;
         auto currentSession = mainWindow_->getCurrentSession();
         QObject::connect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
+        
         auto endTime = std::chrono::steady_clock::now()
-                          + std::chrono::milliseconds(static_cast<int>(timeoutSeconds * 1000));
+                          + std::chrono::milliseconds(timeoutSeconds * 1000);
 
-            // 分段 sleep，每 100ms 检查一次停止标志
-            while (std::chrono::steady_clock::now() < endTime) {
-                if (gShouldStop.load()) {
-                    throw std::runtime_error("interrupted during sleep");
-                }
-
-                if (findWaitForString_) {
-                    isWaitForString_ = false;
-                    QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
-                    return true;
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        while (std::chrono::steady_clock::now() < endTime) {
+            if (gShouldStop.load()) {
+                QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
+                throw std::runtime_error("interrupted during waitForString");
             }
 
+            // 处理定时器
+            processTimers();
+
+            if (findWaitForString_) {
+                isWaitForString_ = false;
+                QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
+                return true;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+
+        isWaitForString_ = false;
         QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
-        return false; // 超时
+        return false;
     });
 
-    // qshell.screen.waitForRegexp(pattern, timeoutSeconds)
-    // 返回: true=匹配成功, false=超时
-    // 示例: qshell.screen.waitForRegexp("\\$\\s*$", 10)  -- 等待 shell 提示符
+    // 修改 waitForRegexp 以支持定时器
     screen.set_function("waitForRegexp", [this](const std::string& pattern, int timeoutSeconds) -> bool {
         isWaitForRegexp_ = true;
         waitForRegexp_ = QRegularExpression(QString::fromStdString(pattern));
         findWaitForRegexp_ = false;
         lastRegexpMatch_.clear();
 
-        // 检查正则表达式是否有效
         if (!waitForRegexp_.isValid()) {
             qWarning() << "Invalid regexp pattern:" << waitForRegexp_.errorString();
             isWaitForRegexp_ = false;
@@ -198,7 +321,7 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
                          this, &LuaScriptEngine::onDisplayOutput);
 
         auto endTime = std::chrono::steady_clock::now()
-                          + std::chrono::milliseconds(static_cast<int>(timeoutSeconds * 1000));
+                          + std::chrono::milliseconds(timeoutSeconds * 1000);
 
         while (std::chrono::steady_clock::now() < endTime) {
             if (gShouldStop.load()) {
@@ -208,33 +331,32 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
                 throw std::runtime_error("interrupted during waitForRegexp");
             }
 
+            // 处理定时器
+            processTimers();
+
             if (findWaitForRegexp_) {
                 isWaitForRegexp_ = false;
                 QObject::disconnect(currentSession, &QTermWidget::onNewLine,
                                    this, &LuaScriptEngine::onDisplayOutput);
                 return true;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
         isWaitForRegexp_ = false;
         QObject::disconnect(currentSession, &QTermWidget::onNewLine,
                            this, &LuaScriptEngine::onDisplayOutput);
-        return false; // 超时
+        return false;
     });
 
-    // 可选：获取最后一次正则匹配的内容
     screen.set_function("getLastMatch", [this]() -> std::string {
         return lastRegexpMatch_.toStdString();
     });
-
-
 }
 
 void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
     sol::table session = qshell.create_named("session");
 
-    // 打开会话
     session.set_function("open", [this](const std::string& sessionName) -> bool {
         bool ok = false;
         QMetaObject::invokeMethod(mainWindow_, [this, sessionName, &ok]() {
@@ -243,7 +365,6 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
         return ok;
     });
 
-    // 获取当前会话名
     session.set_function("tabName", [this]() -> std::string {
         auto currentSession = mainWindow_->getCurrentSession();
         if (currentSession != nullptr) {
@@ -252,14 +373,12 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
         return "";
     });
 
-    //切换到下一个 tab
     session.set_function("nextTab", [this]() {
         QMetaObject::invokeMethod(mainWindow_, [this]() {
             mainWindow_->nextTab();
         }, Qt::BlockingQueuedConnection);
     });
 
-    //切换到 tabName 的 tab
     session.set_function("switchToTab", [this](const std::string& tabName) -> bool {
         bool ok = false;
         QMetaObject::invokeMethod(mainWindow_, [this, tabName, &ok]() {
@@ -268,13 +387,11 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
         return ok;
     });
 
-    // qshell.session.connect() 连接
     session.set_function("connect", [this]() {
         QMetaObject::invokeMethod(mainWindow_, "onConnectAction",
             Qt::BlockingQueuedConnection);
     });
 
-    // qshell.session.disconnect() 连接
     session.set_function("disconnect", [this]() {
         QMetaObject::invokeMethod(mainWindow_, "onDisconnectAction",
             Qt::BlockingQueuedConnection);
@@ -284,6 +401,15 @@ void LuaScriptEngine::registerSessionModule(sol::table &qshell) {
 bool LuaScriptEngine::executeScript(const QString& scriptPath)
 {
     running_ = true;
+    gShouldStop = false;  // 重置停止标志
+    
+    // 清理之前的定时器
+    {
+        std::lock_guard<std::mutex> lock(timersMutex_);
+        timers_.clear();
+        nextTimerId_ = 1;
+    }
+    
     try {
         auto result = lua_.script_file(scriptPath.toStdString());
         running_ = false;
@@ -299,6 +425,15 @@ bool LuaScriptEngine::executeScript(const QString& scriptPath)
 bool LuaScriptEngine::executeCode(const QString& code)
 {
     running_ = true;
+    gShouldStop = false;  // 重置停止标志
+    
+    // 清理之前的定时器
+    {
+        std::lock_guard<std::mutex> lock(timersMutex_);
+        timers_.clear();
+        nextTimerId_ = 1;
+    }
+    
     try {
         auto result = lua_.script(code.toStdString());
         running_ = false;
@@ -310,8 +445,9 @@ bool LuaScriptEngine::executeCode(const QString& code)
         return false;
     }
 }
+
 bool LuaScriptEngine::isRunning() {
-    return  running_;
+    return running_;
 }
 
 void LuaScriptEngine::stopScript()
@@ -321,19 +457,17 @@ void LuaScriptEngine::stopScript()
 }
 
 void LuaScriptEngine::onDisplayOutput(const QString &line) {
-    // qDebug() << "onDisplayOutput:" << line;
     if (isWaitForString_) {
         if (line.contains(waitForString_)) {
             findWaitForString_ = true;
         }
     }
 
-    // 处理正则表达式匹配
     if (isWaitForRegexp_) {
         QRegularExpressionMatch match = waitForRegexp_.match(line);
         if (match.hasMatch()) {
             findWaitForRegexp_ = true;
-            lastRegexpMatch_ = match.captured(0);  // 保存匹配内容
+            lastRegexpMatch_ = match.captured(0);
         }
     }
 }
