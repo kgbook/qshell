@@ -259,6 +259,7 @@ public:
     void setCursorY(int y);
 
     QString getScreenText() const;
+    QString getLastLine() const;
 
     void setUrlFilterEnabled(bool enable);
 

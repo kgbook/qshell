@@ -265,6 +265,15 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
         return text.toStdString();
     });
 
+    screen.set_function("getLastLine", [this]() -> std::string {
+        QString text;
+        QMetaObject::invokeMethod(mainWindow_, "getLastLine",
+                                  Qt::BlockingQueuedConnection,
+                                  Q_RETURN_ARG(QString, text));
+        return text.toStdString();
+    });
+
+
     screen.set_function("clear", [this]() {
         QMetaObject::invokeMethod(mainWindow_, "onClearScreenAction",
             Qt::BlockingQueuedConnection);

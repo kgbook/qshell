@@ -836,6 +836,20 @@ QString QTermWidget::getScreenText() const {
     return result;
 }
 
+QString QTermWidget::getLastLine() const {
+    QString result;
+    QTextStream stream(&result, QIODevice::ReadWrite);
+
+    PlainTextDecoder decoder;
+    decoder.begin(&stream);
+    int end = m_emulation->lineCount();
+    int start = end - 1;
+    m_emulation->writeToStream(&decoder, start, end);
+    decoder.end();
+
+    return result;
+}
+
 void QTermWidget::setSelectionOpacity(qreal opacity) {
     m_terminalDisplay->setSelectionOpacity(opacity);
 }

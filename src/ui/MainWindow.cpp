@@ -767,11 +767,18 @@ void MainWindow::onSendKey(const QString& keyName)
     }
 }
 
-QString MainWindow::getScreenText() const
-{
+QString MainWindow::getScreenText() const {
     if (currentTab_) {
         return currentTab_->getScreenText();
-    } else { return ""; }
+    }
+    return "";
+}
+
+QString MainWindow::getLastLine() const {
+    if (currentTab_) {
+        return currentTab_->getLastLine();
+    }
+    return "";
 }
 
 bool MainWindow::openSessionById(const QString &sessionId) {

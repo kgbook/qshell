@@ -20,6 +20,7 @@ public:
     ~MainWindow() override = default;
     void showEvent(QShowEvent *event) override;
     Q_INVOKABLE QString getScreenText() const;
+    Q_INVOKABLE QString getLastLine() const;
     Q_INVOKABLE bool openSessionById(const QString& sessionId);
     Q_INVOKABLE bool openSessionByName(const QString& sessionName);
     Q_INVOKABLE int tabCount() const;
