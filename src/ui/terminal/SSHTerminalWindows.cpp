@@ -9,8 +9,9 @@
 // ==================== SSHTerminal ====================
 
 SSHTerminal::SSHTerminal(const SessionData &session, QWidget *parent)
-    : BaseTerminal(parent), sessionData_(session) {
+    : BaseTerminal(parent) {
 
+    sessionData_ = session;
     WSADATA wsaData;
     WSAStartup(MAKEWORD(2, 2), &wsaData);
     libssh2_init(0);
