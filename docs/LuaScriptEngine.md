@@ -259,8 +259,109 @@ qshell.session.connect()
 qshell.session.disconnect()
 ```
 
+---
+
+### 4. 定时器模块 (`qshell.timer`)
+
+#### `qshell.timer.setTimeout(callback, delayMs)`
+创建单次定时器，在指定延迟后执行回调函数。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `callback` | function | 定时器触发时执行的回调函数 |
+| `delayMs` | number | 延迟时间（毫秒） |
+
+**返回值**: `number` - 定时器 ID，可用于取消定时器
+
+```lua
+local id = qshell.timer.setTimeout(function()
+    qshell.log("3秒后执行！")
+end, 3000)
+```
 
 ---
+
+#### `qshell.timer.setInterval(callback, intervalMs)`
+创建重复定时器，按指定间隔周期性执行回调函数。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `callback` | function | 定时器触发时执行的回调函数 |
+| `intervalMs` | number | 间隔时间（毫秒） |
+
+**返回值**: `number` - 定时器 ID，可用于取消定时器
+
+```lua
+local count = 0
+local id = qshell.timer.setInterval(function()
+    count = count + 1
+    qshell.log("心跳检测 #" .. count)
+end, 5000)
+
+-- 稍后取消
+-- qshell.timer.clear(id)
+```
+
+---
+
+#### `qshell.timer.clear(timerId)`
+取消指定的定时器。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `timerId` | number | 要取消的定时器 ID |
+
+**返回值**: `boolean` - `true` 表示成功取消，`false` 表示未找到该定时器
+
+```lua
+local id = qshell.timer.setTimeout(function()
+    qshell.log("这条消息不会显示")
+end, 5000)
+
+-- 在定时器触发前取消
+qshell.timer.clear(id)
+```
+
+---
+
+#### `qshell.timer.clearAll()`
+取消所有活动的定时器。
+
+```lua
+-- 清理所有定时器
+qshell.timer.clearAll()
+qshell.log("所有定时器已清除")
+```
+
+---
+
+#### `qshell.timer.process()`
+手动处理所有到期的定时器回调。在长时间运行的循环中应定期调用此函数，以确保定时器能够正常触发。
+
+```lua
+-- 在自定义循环中处理定时器
+while running do
+    -- 执行其他操作...
+    
+    -- 处理到期的定时器
+    qshell.timer.process()
+    
+    qshell.sleep(0.1)
+end
+```
+
+---
+
+#### `qshell.timer.count()`
+获取当前活动定时器的数量。
+
+**返回值**: `number` - 活动定时器数量
+
+```lua
+local n = qshell.timer.count()
+qshell.log("当前有 " .. n .. " 个活动定时器")
+```
+
 
 ## 完整示例
 
