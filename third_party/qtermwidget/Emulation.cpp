@@ -257,28 +257,6 @@ void Emulation::receiveData(const char *text, int length) {
     }
 }
 
-void Emulation::dupDisplayCharacter(wchar_t cc) {
-    if (cc == L'\n') {
-        dupCache.append(L'\n');
-        PlainTextDecoder decoder;
-        QString lineText;
-        QTextStream stream(&lineText);
-        decoder.begin(&stream);
-        Character *data = new Character[dupCache.size()];
-        for (int j = 0; j < dupCache.size(); j++) {
-            data[j] = Character(dupCache.at(j));
-        }
-        decoder.decodeLine(data, dupCache.size(), 0);
-        decoder.end();
-        delete[] data;
-        emit dupDisplayOutput(lineText.toUtf8().constData(),
-                            lineText.toUtf8().length());
-        dupCache.clear();
-    } else {
-        dupCache.append(cc);
-    }
-}
-
 void Emulation::writeToStream(TerminalCharacterDecoder *_decoder, int startLine,
                               int endLine) {
     _currentScreen->writeLinesToStream(_decoder, startLine, endLine);

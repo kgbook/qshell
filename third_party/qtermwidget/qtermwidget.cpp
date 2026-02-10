@@ -97,7 +97,6 @@ QTermWidget::QTermWidget(QWidget *messageParentWidget, QWidget *parent)
         }
         emit sendData(buff, len);
     });
-    connect( m_emulation, &Emulation::dupDisplayOutput, this, &QTermWidget::dupDisplayOutput);
     connect( m_emulation, &Emulation::changeTabTextColorRequest, this, &QTermWidget::changeTabTextColorRequest);
     connect( m_emulation, &Emulation::cursorChanged, this, &QTermWidget::cursorChanged);
 

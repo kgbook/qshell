@@ -300,7 +300,6 @@ signals:
      * control and display the remote terminal.
      */
     void sendData(const char *,int);
-    void dupDisplayOutput(const char* data,int len);
     void profileChanged(const QString & profile);
     void titleChanged(int title,const QString& newTitle);
     void changeTabTextColorRequest(int);

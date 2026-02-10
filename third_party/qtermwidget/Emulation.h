@@ -276,8 +276,6 @@ public slots:
      */
     void receiveData(const char* buffer,int len);
 
-    void dupDisplayCharacter(wchar_t cc);
-
 signals:
 
     /**
@@ -288,8 +286,6 @@ signals:
      * @param len The length of @p data in bytes
      */
     void sendData(const char* data,int len);
-
-    void dupDisplayOutput(const char* data,int len);
 
     /**
      * Requests that sending of input to the emulation

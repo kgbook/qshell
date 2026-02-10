@@ -13,7 +13,7 @@
 9. [x]实现 command window
 10. [x]实现 button bar
 11. []实现配置导入导出
-12. []实现 lua 脚本支持
+12. [x]实现 lua 脚本支持
 13. []实现 x11 
     [x] linux, macos 支持 x11
     [] windows 支持 x11

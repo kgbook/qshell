@@ -246,8 +246,6 @@ void Vt102Emulation::initTokenizer() {
 
 // process an incoming unicode character
 void Vt102Emulation::receiveChar(wchar_t cc) {
-    if ((cc == L'\r') || (cc == L'\n'))
-        dupDisplayCharacter(cc);
     if (cc == DEL)
         return; // VT100: ignore.
 
@@ -596,7 +594,6 @@ void Vt102Emulation::processToken(int token, wchar_t p, int q) {
     switch (token) {
     case TY_CHR():
         _currentScreen->displayCharacter(p);
-        dupDisplayCharacter(p);
         break; // UTF16
 
         //             127 DEL    : ignored on input
@@ -663,13 +660,11 @@ void Vt102Emulation::processToken(int token, wchar_t p, int q) {
         break;
     case TY_CTL('X'):
         _currentScreen->displayCharacter(0x2592);
-        dupDisplayCharacter(0x2592);
         break;          // VT100
     case TY_CTL('Y'): /* EM : ignored                      */
         break;
     case TY_CTL('Z'):
         _currentScreen->displayCharacter(0x2592);
-        dupDisplayCharacter(0x2592);
         break;          // VT100
     case TY_CTL('['): /* ESC: cannot be seen here.         */
         break;
