@@ -290,6 +290,8 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
         auto endTime = std::chrono::steady_clock::now()
                           + std::chrono::milliseconds(timeoutSeconds * 1000);
 
+        int pollCounter = 0;
+        constexpr int pollInterval = 4;  // 每4次循环检查一次屏幕内容（约200ms）
         while (std::chrono::steady_clock::now() < endTime) {
             if (gShouldStop.load()) {
                 QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
@@ -304,6 +306,19 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
                 QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
                 return true;
             }
+
+            // 定期轮询屏幕内容（检查最后一行）
+            if (++pollCounter >= pollInterval) {
+                pollCounter = 0;
+                auto lastLine = mainWindow_->getLastLine();
+                if (lastLine.contains(waitForString_)) {
+                    findWaitForString_ = true;
+                    isWaitForString_ = false;
+                    QObject::disconnect(currentSession, &QTermWidget::onNewLine, this, &LuaScriptEngine::onDisplayOutput);
+                    return true;
+                }
+            }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
@@ -332,6 +347,8 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
         auto endTime = std::chrono::steady_clock::now()
                           + std::chrono::milliseconds(timeoutSeconds * 1000);
 
+        int pollCounter = 0;
+        constexpr int pollInterval = 4;  // 每4次循环检查一次屏幕内容（约200ms）
         while (std::chrono::steady_clock::now() < endTime) {
             if (gShouldStop.load()) {
                 isWaitForRegexp_ = false;
@@ -349,6 +366,23 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
                                    this, &LuaScriptEngine::onDisplayOutput);
                 return true;
             }
+
+            // 定期轮询屏幕内容（检查最后一行）
+            if (++pollCounter >= pollInterval) {
+                pollCounter = 0;
+                auto lastLine = mainWindow_->getLastLine();
+                QRegularExpressionMatch match = waitForRegexp_.match(lastLine);
+                if (match.hasMatch()) {
+                    findWaitForRegexp_ = true;
+                    lastRegexpMatch_ = match.captured(0);
+                    isWaitForRegexp_ = false;
+                    QObject::disconnect(currentSession, &QTermWidget::onNewLine,
+                                        this, &LuaScriptEngine::onDisplayOutput);
+                    return true;
+                }
+
+            }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
 
