@@ -8,17 +8,16 @@
 #include "ui/terminal/BaseTerminal.h"
 
 #include <QCoreApplication>
-#include <QMessageBox>
+#include <QFileInfo>
 #include <QInputDialog>
+#include <QMessageBox>
 #include <QNetworkAccessManager>
-#include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QUrl>
 #include <QUrlQuery>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <thread>
 #include <algorithm>
+#include <thread>
 #include <utility>
 
 // 全局停止标志（线程安全）
@@ -36,7 +35,16 @@ LuaScriptEngine::LuaScriptEngine(MainWindow* mainWindow)
 {
     lua_.open_libraries(sol::lib::base, sol::lib::string,
                          sol::lib::table, sol::lib::math,
-                         sol::lib::os, sol::lib::io);
+                         sol::lib::os, sol::lib::io, sol::lib::package);
+
+    QString scriptDir = QCoreApplication::applicationDirPath() + "/scripts";
+    std::string currentPath = lua_["package"]["path"];
+    std::string newPath = currentPath + ";"
+            + scriptDir.toStdString() + "/?.lua;"
+            + scriptDir.toStdString() + "/?/init.lua";
+
+    lua_["package"]["path"] = newPath;
+
     registerAPIs();
     lua_sethook(lua_.lua_state(), interruptHook, LUA_MASKCOUNT, 1000);
 }
@@ -676,6 +684,20 @@ sol::table LuaScriptEngine::performHttpRequest(const std::string& method,
 
 bool LuaScriptEngine::executeScript(const QString& scriptPath)
 {
+    QFileInfo fileInfo(scriptPath);
+    QString scriptDir = fileInfo.absolutePath();
+
+    // 动态添加脚本所在目录到 package.path
+    std::string currentPath = lua_["package"]["path"];
+    std::string dirPath = scriptDir.toStdString();
+
+    // 替换反斜杠（Windows 兼容）
+    std::replace(dirPath.begin(), dirPath.end(), '\\', '/');
+
+    lua_["package"]["path"] = dirPath + "/?.lua;"
+                           + dirPath + "/?/init.lua;"
+                           + currentPath;
+
     running_ = true;
     gShouldStop = false;  // 重置停止标志
     
