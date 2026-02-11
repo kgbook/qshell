@@ -34,6 +34,7 @@
 
 // beginning of sol/version.hpp
 
+#include <complex>
 #include <sol/config.hpp>
 
 #define SOL_VERSION_MAJOR 3
@@ -6747,13 +6748,13 @@ namespace sol {
 		/// one.
 		///
 		/// \group emplace
-		template <class... Args>
-		T& emplace(Args&&... args) noexcept {
-			static_assert(std::is_constructible<T, Args&&...>::value, "T must be constructible with Args");
-
-			*this = nullopt;
-			this->construct(std::forward<Args>(args)...);
+		template <class U>
+		T& emplace(U&& u) noexcept {
+		    static_assert(std::is_lvalue_reference<U>::value,"emplace for optional<T&> requires lvalue");
+		    m_value = std::addressof(u);
+		    return *m_value;
 		}
+
 
 		/// Swaps this optional with the other.
 		///

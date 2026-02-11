@@ -669,7 +669,7 @@ sol::table LuaScriptEngine::performHttpRequest(const std::string& method,
     if (!errorString.isEmpty()) {
         result["error"] = errorString.toStdString();
     } else {
-        result["error"] = sol::nil;
+        result["error"] = "";
     }
 
     // 转换响应头为 Lua table
