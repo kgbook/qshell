@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 
     // 设置应用信息
     QCoreApplication::setApplicationName("qshell");
-    QCoreApplication::setApplicationVersion("1.0.4");
+    QCoreApplication::setApplicationVersion("1.0.7");
     QCoreApplication::setOrganizationName("qiushao");
     QCoreApplication::setOrganizationDomain("https://github.com/qiushao/qshell");
 
