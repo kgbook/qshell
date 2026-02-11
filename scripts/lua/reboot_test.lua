@@ -31,15 +31,6 @@ for i = 1, 10 do
 
     qshell.screen.sendText("reboot\r")
     qshell.sleep(3)
-    ret = qshell.screen.waitForString("Starting kernel ...", 30)
-    if (ret == false) then
-        qshell.showMessage("wait kernel start failed")
-        return
-    end
-
-    qshell.sleep(7)
-    qshell.screen.sendText("\r")
-    qshell.screen.sendText("\r")
     ret = qshell.screen.waitForString("console:/ $", 30)
     if (ret == false) then
         qshell.showMessage("wait console start failed")
@@ -68,8 +59,7 @@ for i = 1, 10 do
     qshell.sleep(1)
 
     qshell.screen.sendText("ifconfig\r")
-    qshell.screen.sendText("\r")
-    qshell.sleep(1)
+    qshell.sleep(2)
     local str = qshell.screen.getScreenText()
     local ip = str:match("eth0.-inet addr:([%d%.]+)")
     if (ip == false or ip == nil) then

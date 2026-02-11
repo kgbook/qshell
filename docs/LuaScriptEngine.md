@@ -3,12 +3,13 @@
 ## 概述
 
 QShell 提供了内置的 Lua 脚本引擎，用于终端会话的自动化操作。所有 API 都通过 `qshell` 命名空间访问。
+Lua 的语法细节请参考 [lua-tutorial](https://www.runoob.com/lua/lua-tutorial.html)
 
 ---
 
 ## API 参考
 
-### 1. 核心模块 (`qshell`)
+### 1. qshell 模块
 
 #### `qshell.showMessage(msg)`
 弹出消息对话框。
@@ -17,6 +18,7 @@ QShell 提供了内置的 Lua 脚本引擎，用于终端会话的自动化操�
 |------|------|------|
 | `msg` | string | 要显示的消息内容 |
 
+example:
 ```lua
 qshell.showMessage("操作完成！")
 ```
@@ -34,6 +36,7 @@ qshell.showMessage("操作完成！")
 
 **返回值**: `string` - 用户输入的内容，取消时返回空字符串
 
+example:
 ```lua
 local username = qshell.input("请输入用户名:", "admin", "登录")
 if username ~= "" then
@@ -46,6 +49,7 @@ end
 #### `qshell.log(msg)`
 输出调试日志（输出到 Qt 调试控制台）。
 
+example:
 ```lua
 qshell.log("脚本开始执行...")
 ```
@@ -59,6 +63,7 @@ qshell.log("脚本开始执行...")
 |------|------|------|
 | `seconds` | number | 等待的秒数 |
 
+example:
 ```lua
 qshell.sleep(2)  -- 等待 2 秒
 ```
@@ -70,6 +75,7 @@ qshell.sleep(2)  -- 等待 2 秒
 
 **返回值**: `string` - 版本号字符串
 
+example:
 ```lua
 local version = qshell.getVersionStr()
 qshell.log("当前版本: " .. version)
@@ -80,11 +86,11 @@ qshell.log("当前版本: " .. version)
 ### 2. 屏幕模块 (`qshell.screen`)
 
 #### `qshell.screen.sendText(text)`
-向当前终端发送文本（不自动添加换行符）。
+向当前终端发送文本，不会自动添加换行，可以使用 `\r` 表示换行。
 
+example:
 ```lua
-qshell.screen.sendText("ls -la")
-qshell.screen.sendKey("Enter")
+qshell.screen.sendText("ls -la\r")
 ```
 
 ---
@@ -101,8 +107,10 @@ qshell.screen.sendKey("Enter")
 | F键 | `F1` - `F12` |
 | 组合键 | `Ctrl+C`, `Ctrl+D` 等 |
 
+example:
 ```lua
-qshell.screen.sendKey("Enter")
+qshell.screen.sendText("ping 192.168.1.168\r")
+qshell.sleep(3)
 qshell.screen.sendKey("Ctrl+C")
 ```
 
@@ -113,9 +121,16 @@ qshell.screen.sendKey("Ctrl+C")
 
 **返回值**: `string` - 屏幕文本
 
+example:
 ```lua
-local content = qshell.screen.getScreenText()
-qshell.log(content)
+qshell.screen.sendText("ifconfig\r")
+qshell.sleep(2)
+local str = qshell.screen.getScreenText()
+local ip = str:match("eth0.-inet addr:([%d%.]+)")
+if (ip == false or ip == nil) then
+   qshell.showMessage("get ip failed")
+   return
+end
 ```
 
 ---
@@ -123,6 +138,7 @@ qshell.log(content)
 #### `qshell.screen.clear()`
 清除当前终端屏幕。
 
+example:
 ```lua
 qshell.screen.clear()
 ```
@@ -139,13 +155,12 @@ qshell.screen.clear()
 
 **返回值**: `boolean` - `true` 表示找到，`false` 表示超时
 
+example:
 ```lua
-qshell.screen.sendText("ssh user@server")
-qshell.screen.sendKey("Enter")
+qshell.screen.sendText("ssh user@server\r")
 
 if qshell.screen.waitForString("password:", 30) then
-    qshell.screen.sendText("mypassword")
-    qshell.screen.sendKey("Enter")
+    qshell.screen.sendText("mypassword\r")
 else
     qshell.showMessage("连接超时！")
 end
@@ -163,7 +178,10 @@ end
 
 **返回值**: `boolean` - `true` 表示匹配成功，`false` 表示超时
 
+example:
 ```lua
+qshell.screen.sendText("reboot\r")
+qshell.sleep(3)
 -- 等待 shell 提示符 ($ 或 #)
 if qshell.screen.waitForRegexp("[\\$#]\\s*$", 10) then
     qshell.log("已就绪")
@@ -177,6 +195,7 @@ end
 
 **返回值**: `string` - 匹配的字符串
 
+example:
 ```lua
 if qshell.screen.waitForRegexp("IP: ([0-9.]+)", 5) then
     local match = qshell.screen.getLastMatch()
@@ -197,6 +216,7 @@ end
 
 **返回值**: `boolean` - 是否成功打开
 
+example:
 ```lua
 if qshell.session.open("MyServer") then
     qshell.log("会话已打开")
@@ -210,6 +230,7 @@ end
 
 **返回值**: `string` - 会话名称
 
+example:
 ```lua
 local name = qshell.session.tabName()
 qshell.log("当前会话: " .. name)
@@ -220,6 +241,7 @@ qshell.log("当前会话: " .. name)
 #### `qshell.session.nextTab()`
 切换到下一个标签页。
 
+example:
 ```lua
 qshell.session.nextTab()
 ```
@@ -235,6 +257,7 @@ qshell.session.nextTab()
 
 **返回值**: `boolean` - 是否成功切换
 
+example:
 ```lua
 if qshell.session.switchToTab("Server1") then
     qshell.log("已切换到 Server1")
@@ -246,6 +269,7 @@ end
 #### `qshell.session.connect()`
 连接当前会话。
 
+example:
 ```lua
 qshell.session.connect()
 ```
@@ -255,6 +279,7 @@ qshell.session.connect()
 #### `qshell.session.disconnect()`
 断开当前会话连接。
 
+example:
 ```lua
 qshell.session.disconnect()
 ```
@@ -273,6 +298,7 @@ qshell.session.disconnect()
 
 **返回值**: `number` - 定时器 ID，可用于取消定时器
 
+example:
 ```lua
 local id = qshell.timer.setTimeout(function()
     qshell.log("3秒后执行！")
@@ -291,6 +317,7 @@ end, 3000)
 
 **返回值**: `number` - 定时器 ID，可用于取消定时器
 
+example:
 ```lua
 local count = 0
 local id = qshell.timer.setInterval(function()
@@ -313,6 +340,7 @@ end, 5000)
 
 **返回值**: `boolean` - `true` 表示成功取消，`false` 表示未找到该定时器
 
+example:
 ```lua
 local id = qshell.timer.setTimeout(function()
     qshell.log("这条消息不会显示")
@@ -327,6 +355,7 @@ qshell.timer.clear(id)
 #### `qshell.timer.clearAll()`
 取消所有活动的定时器。
 
+example:
 ```lua
 -- 清理所有定时器
 qshell.timer.clearAll()
@@ -337,7 +366,11 @@ qshell.log("所有定时器已清除")
 
 #### `qshell.timer.process()`
 手动处理所有到期的定时器回调。在长时间运行的循环中应定期调用此函数，以确保定时器能够正常触发。
+一般来说长时间运行的循环中，都会有 qshell.sleep 的调用，不然 cpu 就抗不住了，
+如果有调用了 qshell.sleep(seconds) 接口，就没必要再调用 qshell.timer.process()
+因为在 qshell.sleep 内部会有触发定时器的逻辑
 
+example:
 ```lua
 -- 在自定义循环中处理定时器
 while running do
@@ -346,7 +379,6 @@ while running do
     -- 处理到期的定时器
     qshell.timer.process()
     
-    qshell.sleep(0.1)
 end
 ```
 
@@ -357,6 +389,7 @@ end
 
 **返回值**: `number` - 活动定时器数量
 
+example:
 ```lua
 local n = qshell.timer.count()
 qshell.log("当前有 " .. n .. " 个活动定时器")
@@ -366,8 +399,11 @@ qshell.log("当前有 " .. n .. " 个活动定时器")
 ## 完整示例
 
 ### 示例 1： reboot 压测
+打开两个会话，一个串口，一个本地 shell，
+串口用于控制板子，local shell 用于 adb 连接，拉取日志
 
 ```lua
+-- 使用 qshell.app 模块
 versionInfo = qshell.getVersionStr()
 qshell.log("脚本开始执行..." .. versionInfo)
 
@@ -400,15 +436,6 @@ for i = 1, 10 do
 
     qshell.screen.sendText("reboot\r")
     qshell.sleep(3)
-    ret = qshell.screen.waitForString("Starting kernel ...", 30)
-    if (ret == false) then
-        qshell.showMessage("wait kernel start failed")
-        return
-    end
-
-    qshell.sleep(7)
-    qshell.screen.sendText("\r")
-    qshell.screen.sendText("\r")
     ret = qshell.screen.waitForString("console:/ $", 30)
     if (ret == false) then
         qshell.showMessage("wait console start failed")
@@ -437,8 +464,7 @@ for i = 1, 10 do
     qshell.sleep(1)
 
     qshell.screen.sendText("ifconfig\r")
-    qshell.screen.sendText("\r")
-    qshell.sleep(1)
+    qshell.sleep(2)
     local str = qshell.screen.getScreenText()
     local ip = str:match("eth0.-inet addr:([%d%.]+)")
     if (ip == false or ip == nil) then
@@ -468,7 +494,6 @@ for i = 1, 10 do
 end
 
 qshell.showMessage("exec script finish")
-
 ```
 
 
