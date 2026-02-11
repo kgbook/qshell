@@ -7,7 +7,7 @@ cd ${SCRIPT_DIR}/..
 if [ -n "$1" ]; then
     VERSION="$1"
 elif git describe --tags --abbrev=0 &>/dev/null; then
-    VERSION=$(git describe --tags --abbrev=0 | sed 's/^v//')
+    VERSION=$(git describe --tags --abbrev=0 | sed 's/^[vV]//')
 else
     VERSION="1.0.0"
 fi

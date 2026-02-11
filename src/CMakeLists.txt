@@ -83,11 +83,6 @@ endif ()
 
 # ==================== CPack DEB 打包配置 ====================
 if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    # 版本号 - 从命令行传入，默认 1.0.0
-    if(NOT DEFINED APP_VERSION)
-        set(APP_VERSION "1.0.0")
-    endif()
-
     # 基本信息
     set(CPACK_PACKAGE_NAME "qshell")
     set(CPACK_PACKAGE_VERSION "${APP_VERSION}")
@@ -104,7 +99,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "qiushao <360325900@qq.com>")
     set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${CMAKE_SYSTEM_PROCESSOR}")
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 
     # 自动检测依赖
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
