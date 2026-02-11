@@ -3,6 +3,9 @@
 #include <QObject>
 #include <QString>
 #include <QRegularExpression>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
 #include <sol/sol.hpp>
 #include <chrono>
 #include <vector>
@@ -29,12 +32,19 @@ private:
     void registerAppModule(sol::table &qshell);
     void registerScreenModule(sol::table &qshell);
     void registerSessionModule(sol::table &qshell);
-    void registerTimerModule(sol::table &qshell);  // 新增
+    void registerTimerModule(sol::table &qshell);
+    void registerHttpModule(sol::table &qshell);
     void onDisplayOutput(const QString &line);
 
     // 定时器处理
     void processTimers();
     void interruptibleSleep(int milliseconds);
+
+    // HTTP 请求辅助方法
+    sol::table performHttpRequest(const std::string& method,
+                                   const std::string& url,
+                                   const std::string& body,
+                                   sol::optional<sol::table> options);
 
     sol::state lua_;
     MainWindow *mainWindow_ = nullptr;
