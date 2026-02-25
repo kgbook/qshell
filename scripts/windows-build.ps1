@@ -68,7 +68,7 @@ try {
         New-Item -ItemType Directory -Path $BuildDir | Out-Null
     }
 
-    cmake -B $BuildDir -S . -DCMAKE_BUILD_TYPE=$BuildType
+    cmake -B $BuildDir -S . -DAPP_VERSION=$Version -DCMAKE_BUILD_TYPE=$BuildType
     if ($LASTEXITCODE -ne 0) {
         throw "CMake configure failed"
     }

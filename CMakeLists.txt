@@ -13,7 +13,6 @@ endif ()
 if(NOT DEFINED APP_VERSION)
     set(APP_VERSION "1.0.0")
 endif()
-add_compile_definitions(-DAPP_VERSION="${APP_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
