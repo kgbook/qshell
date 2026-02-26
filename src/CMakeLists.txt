@@ -103,8 +103,11 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
     set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
 
-    # 自动检测依赖
+    # 自动检测 + 手动补充
     set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS
+            "libqt6core6, libqt6gui6, libqt6widgets6, libqt6serialport6"
+    )
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 
     include(CPack)

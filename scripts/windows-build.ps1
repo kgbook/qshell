@@ -6,7 +6,7 @@
     Build only, skip packaging
 
 .PARAMETER Version
-    Version string for ZIP filename
+    Version string for ZIP filename (if not specified, will try to get from git tag)
 
 .PARAMETER BuildType
     Build type: Release or Debug
@@ -16,12 +16,12 @@
 
 .EXAMPLE
     .\windows-build.ps1 -BuildOnly
-    .\windows-build.ps1 -Version "V1.0.0"
+    .\windows-build.ps1 -Version "1.0.0"
 #>
 
 param(
     [switch]$BuildOnly,
-    [string]$Version = "dev",
+    [string]$Version,  # 移除默认值，让后续逻辑处理
     [ValidateSet("Release", "Debug")]
     [string]$BuildType = "Release",
     [string]$OutputDir = "deploy"
@@ -51,6 +51,28 @@ function Write-Err {
     param([string]$Message)
     Write-Host "[ERROR] $Message" -ForegroundColor Red
 }
+
+# ==================== 版本号获取逻辑 ====================
+# 优先使用传入参数，否则从 git tag 获取，最后使用默认值
+if ($PSBoundParameters.ContainsKey('Version') -and $Version) {
+    # 使用传入的参数
+} else {
+    # 尝试从 git tag 获取
+    try {
+        $gitTag = git describe --tags --abbrev=0 2>$null
+        if ($LASTEXITCODE -eq 0 -and $gitTag) {
+            # 移除开头的 v 或 V
+            $Version = $gitTag -replace '^[vV]', ''
+        } else {
+            $Version = "1.0.0"
+        }
+    } catch {
+        $Version = "1.0.0"
+    }
+}
+
+Write-Host ""
+Write-Info "Building version: $Version"
 
 # Get project root directory
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
