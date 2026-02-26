@@ -29,4 +29,25 @@ windows 开发 qt 环境配置比较复杂，我们采用的是 msvc2022 + qt6 o
 ```
 
 # macos
-暂无环境测试，不确定要安装哪些依赖， 但编译步骤应该跟 linux 是一样的
+## install dependencies
+```shell
+brew install cmake qt6
+export Qt6_DIR=$(brew --prefix qt6)
+```
+
+## build & package
+```shell
+./scripts/macos-build.sh
+```
+
+## manual build steps
+```shell
+cmake -B build -S .
+cmake --build build
+```
+
+## create DMG package
+```shell
+cd build
+cpack -G DragNDrop
+```

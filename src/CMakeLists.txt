@@ -83,8 +83,9 @@ install(FILES resources/images/qshell.png
 endif ()
 
 
-# ==================== CPack DEB 打包配置 ====================
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+# ==================== CPack 打包配置 ====================
+# 公共配置（Linux 和 macOS 共用）
+if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
     # 基本信息
     set(CPACK_PACKAGE_NAME "qshell")
     set(CPACK_PACKAGE_VERSION "${APP_VERSION}")
@@ -93,7 +94,10 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CPACK_PACKAGE_VENDOR "qiushao")
     set(CPACK_PACKAGE_CONTACT "360325900@qq.com")
     set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/qiushao/qshell")
+endif()
 
+# ==================== CPack DEB 打包配置 ====================
+if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     # 设置打包类型为 DEB
     set(CPACK_GENERATOR "DEB")
 
@@ -109,6 +113,36 @@ if (CMAKE_SYSTEM_NAME MATCHES "Linux")
             "libqt6core6, libqt6gui6, libqt6widgets6, libqt6serialport6"
     )
     set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+
+    include(CPack)
+endif()
+
+# ==================== CPack macOS DMG 打包配置 ====================
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    # 设置打包类型为 DragNDrop (DMG)
+    set(CPACK_GENERATOR "DragNDrop")
+
+    # macOS 特定配置
+    set(CPACK_DMG_VOLUME_NAME "qshell")
+    set(CPACK_DMG_FORMAT "UDZO")  # 压缩格式
+    set(CPACK_DMG_BACKGROUND_IMAGE "")  # 可选：设置 DMG 背景图片
+    set(CPACK_DMG_DS_STORE "")  # 可选：自定义 .DS_Store 布局
+
+    # 应用程序图标 (需要将 PNG 转换为 ICNS 格式)
+    # 注意：需要手动创建 qshell.icns 文件或使用脚本转换
+    set(CPACK_BUNDLE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/resources/images/qshell.icns")
+    set(CPACK_BUNDLE_NAME "qshell")
+
+    # 配置 Info.plist 模板，替换版本号
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources/Info.plist.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/Info.plist"
+        @ONLY
+    )
+    set(CPACK_BUNDLE_PLIST "${CMAKE_CURRENT_BINARY_DIR}/Info.plist")
+
+    # 设置应用程序类型
+    set(CPACK_PACKAGE_FILE_NAME "qshell-${APP_VERSION}-Darwin")
 
     include(CPack)
 endif()
