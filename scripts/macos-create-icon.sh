@@ -5,13 +5,13 @@ SCRIPT_DIR=$(cd $(dirname ${BASH_SOURCE[0]});pwd)
 cd ${SCRIPT_DIR}
 
 # Source PNG file
-PNG_FILE="${SCRIPT_DIR}/resources/images/qshell.png"
+PNG_FILE="${SCRIPT_DIR}/../src/resources/images/qshell.png"
 
 # Output directory for iconset
-ICONSET_DIR="${SCRIPT_DIR}/resources/images/qshell.iconset"
+ICONSET_DIR="${SCRIPT_DIR}/../src/resources/images/qshell.iconset"
 
 # Output ICNS file
-ICNS_FILE="${SCRIPT_DIR}/resources/images/qshell.icns"
+ICNS_FILE="${SCRIPT_DIR}/../src/resources/images/qshell.icns"
 
 # Check if source PNG exists
 if [ ! -f "${PNG_FILE}" ]; then
