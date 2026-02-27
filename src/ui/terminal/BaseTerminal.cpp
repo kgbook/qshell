@@ -29,6 +29,7 @@ BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
     setUrlFilterEnabled(false);
     setColorScheme(globalSettings.colorScheme);
     setScrollBarPosition(ScrollBarRight);
+    setConfirmMultilinePaste(false);
 
     if (globalSettings.copyOnSelect) {
         QObject::connect(this, &QTermWidget::copyAvailable, this, &BaseTerminal::onCopyAvailable);
