@@ -19,6 +19,7 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override = default;
     void showEvent(QShowEvent *event) override;
+    bool runScriptAtStartup(const QString &scriptPath);
     Q_INVOKABLE QString getScreenText() const;
     Q_INVOKABLE QString getLastLine() const;
     Q_INVOKABLE bool openSessionById(const QString& sessionId);

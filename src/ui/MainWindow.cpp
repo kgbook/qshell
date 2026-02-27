@@ -16,6 +16,7 @@
 #include <QApplication>
 #include <QDesktopServices>
 #include <QDockWidget>
+#include <QFile>
 #include <QFileDialog>
 #include <QKeyEvent>
 #include <QMenuBar>
@@ -95,6 +96,21 @@ void MainWindow::showEvent(QShowEvent *event) {
         firstShow = false;
         QTimer::singleShot(100, this, &MainWindow::restoreLayoutState);
     }
+}
+
+bool MainWindow::runScriptAtStartup(const QString &scriptPath) {
+    if (scriptPath.isEmpty()) {
+        qWarning() << "Startup script path is empty";
+        return false;
+    }
+
+    if (!QFile::exists(scriptPath)) {
+        qWarning() << "Startup script does not exist:" << scriptPath;
+        return false;
+    }
+
+    runScript(scriptPath);
+    return true;
 }
 
 void MainWindow::onOpenSession(const QString &sessionId) {

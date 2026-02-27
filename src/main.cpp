@@ -1,5 +1,8 @@
 #include <QApplication>
+#include <QCommandLineOption>
+#include <QCommandLineParser>
 #include <QStyleFactory>
+#include <QTimer>
 #include "ui/MainWindow.h"
 #include "core/ConfigManager.h"
 
@@ -52,7 +55,29 @@ int main(int argc, char *argv[])
     QString version = QCoreApplication::applicationVersion();
     qDebug() << "Version:" << version;
 
+    QCommandLineParser parser;
+    parser.setApplicationDescription("QShell Terminal Emulator");
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    QCommandLineOption scriptOption(
+        QStringList() << "script",
+        "Execute Lua script on startup.",
+        "path"
+    );
+    parser.addOption(scriptOption);
+    parser.process(a);
+
+    const QString startupScriptPath = parser.value(scriptOption).trimmed();
+
     MainWindow w;
     w.show();
+
+    if (!startupScriptPath.isEmpty()) {
+        QTimer::singleShot(0, &w, [startupScriptPath, &w]() {
+            w.runScriptAtStartup(startupScriptPath);
+        });
+    }
+
     return QApplication::exec();
 }
