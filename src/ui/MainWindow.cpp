@@ -208,6 +208,12 @@ void MainWindow::initActions() {
     settingsAction_ = new QAction(*settingsIcon_, tr("Setting"), this);
     connect(settingsAction_, &QAction::triggered, this, &MainWindow::onSettingsAction);
 
+    importConfigAction_ = new QAction(tr("Import Config..."), this);
+    connect(importConfigAction_, &QAction::triggered, this, &MainWindow::onImportConfigAction);
+
+    exportConfigAction_ = new QAction(tr("Export Config..."), this);
+    connect(exportConfigAction_, &QAction::triggered, this, &MainWindow::onExportConfigAction);
+
     connectAction_ = new QAction(*connectIcon_, tr("Connect"), this);
     connectAction_->setEnabled(false);
     connect(connectAction_, &QAction::triggered, this, &MainWindow::onConnectAction);
@@ -279,6 +285,10 @@ void MainWindow::initMenu() {
     fileMenu_ = new QMenu(tr("File"), mainMenuBar_);
     mainMenuBar_->addAction(fileMenu_->menuAction());
     fileMenu_->addAction(settingsAction_);
+    fileMenu_->addSeparator();
+    fileMenu_->addAction(importConfigAction_);
+    fileMenu_->addAction(exportConfigAction_);
+    fileMenu_->addSeparator();
     fileMenu_->addAction(connectAction_);
     fileMenu_->addAction(disConnectAction_);
     fileMenu_->addAction(exitAction_);
@@ -342,6 +352,70 @@ void MainWindow::initToolbar() {
 void MainWindow::onSettingsAction() {
     SettingDialog settingDialog(this);
     settingDialog.exec();
+}
+
+void MainWindow::onImportConfigAction() {
+    if (QMessageBox::question(this,
+                              tr("Import Config"),
+                              tr("Importing will overwrite current configuration. Continue?"),
+                              QMessageBox::Yes | QMessageBox::No,
+                              QMessageBox::No) != QMessageBox::Yes) {
+        return;
+    }
+
+    const QString filePath = QFileDialog::getOpenFileName(this,
+                                                          tr("Import Config"),
+                                                          QString(),
+                                                          tr("JSON Files (*.json);;All Files (*)"));
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    QString errorMessage;
+    if (!ConfigManager::instance()->importConfig(filePath, &errorMessage)) {
+        QMessageBox::critical(this,
+                              tr("Import Failed"),
+                              tr("Failed to import config.\n%1").arg(errorMessage));
+        return;
+    }
+
+    const auto layout = ConfigManager::instance()->getWindowLayout();
+    toolBar_->setVisible(layout.showToolBar);
+    sessionDock_->setVisible(layout.showSessions);
+    commandWindowDock_->setVisible(layout.showCommandWindow);
+    commandButtonBar_->setVisible(layout.showCommandButton);
+    toggleToolbarAction_->setIcon(layout.showToolBar ? *toggleOnIcon_ : *toggleOffIcon_);
+    toggleSessionManagerAction_->setIcon(layout.showSessions ? *toggleOnIcon_ : *toggleOffIcon_);
+    toggleCommandWindowAction_->setIcon(layout.showCommandWindow ? *toggleOnIcon_ : *toggleOffIcon_);
+    toggleCommandButtonAction_->setIcon(layout.showCommandButton ? *toggleOnIcon_ : *toggleOffIcon_);
+    resizeDocks({sessionDock_}, {layout.sessionDockWidth}, Qt::Horizontal);
+    resizeDocks({commandWindowDock_}, {layout.commandWindowHeight}, Qt::Vertical);
+
+    QMessageBox::information(this,
+                             tr("Import Success"),
+                             tr("Configuration imported successfully."));
+}
+
+void MainWindow::onExportConfigAction() {
+    const QString filePath = QFileDialog::getSaveFileName(this,
+                                                          tr("Export Config"),
+                                                          "qshell-config.json",
+                                                          tr("JSON Files (*.json);;All Files (*)"));
+    if (filePath.isEmpty()) {
+        return;
+    }
+
+    QString errorMessage;
+    if (!ConfigManager::instance()->exportConfig(filePath, &errorMessage)) {
+        QMessageBox::critical(this,
+                              tr("Export Failed"),
+                              tr("Failed to export config.\n%1").arg(errorMessage));
+        return;
+    }
+
+    QMessageBox::information(this,
+                             tr("Export Success"),
+                             tr("Configuration exported successfully."));
 }
 
 void MainWindow::onConnectAction() {

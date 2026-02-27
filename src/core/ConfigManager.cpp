@@ -5,7 +5,120 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonParseError>
 #include <algorithm>
+
+namespace {
+bool loadConfigFromFile(const QString& filePath,
+                        QMap<QString, GroupData>& groups,
+                        QMap<QString, SessionData>& sessions,
+                        QMap<QString, ButtonGroup>& buttonGroups,
+                        QMap<QString, QuickButton>& quickButtons,
+                        GlobalSettings& globalSettings,
+                        WindowLayout& windowLayout,
+                        QString* errorMessage) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        if (errorMessage) {
+            *errorMessage = QObject::tr("Cannot open file: %1").arg(file.errorString());
+        }
+        return false;
+    }
+
+    const QByteArray jsonData = file.readAll();
+    file.close();
+
+    QJsonParseError parseError;
+    const QJsonDocument doc = QJsonDocument::fromJson(jsonData, &parseError);
+    if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        if (errorMessage) {
+            *errorMessage = QObject::tr("Invalid JSON: %1").arg(parseError.errorString());
+        }
+        return false;
+    }
+
+    const QJsonObject root = doc.object();
+
+    groups.clear();
+    const QJsonArray groupsArray = root["groups"].toArray();
+    for (const auto& val : groupsArray) {
+        const GroupData group = GroupData::fromJson(val.toObject());
+        groups[group.id] = group;
+    }
+
+    sessions.clear();
+    const QJsonArray sessionsArray = root["sessions"].toArray();
+    for (const auto& val : sessionsArray) {
+        SessionData session = SessionData::fromJson(val.toObject());
+        session.sshConfig.password = CryptoHelper::decrypt(session.sshConfig.password);
+        session.sshConfig.passphrase = CryptoHelper::decrypt(session.sshConfig.passphrase);
+        sessions[session.id] = session;
+    }
+
+    buttonGroups.clear();
+    const QJsonArray btnGroupsArray = root["buttonGroups"].toArray();
+    for (const auto& val : btnGroupsArray) {
+        const ButtonGroup group = ButtonGroup::fromJson(val.toObject());
+        buttonGroups[group.id] = group;
+    }
+
+    quickButtons.clear();
+    const QJsonArray buttonsArray = root["quickButtons"].toArray();
+    for (const auto& val : buttonsArray) {
+        const QuickButton btn = QuickButton::fromJson(val.toObject());
+        quickButtons[btn.id] = btn;
+    }
+
+    globalSettings = GlobalSettings::fromJson(root["globalSettings"].toObject());
+    if (root.contains("windowLayout")) {
+        windowLayout = WindowLayout::fromJson(root["windowLayout"].toObject());
+    } else {
+        windowLayout = WindowLayout{};
+    }
+
+    return true;
+}
+
+QJsonObject buildConfigJson(const QList<GroupData>& groups,
+                            const QList<SessionData>& sessions,
+                            const QList<ButtonGroup>& buttonGroups,
+                            const QList<QuickButton>& quickButtons,
+                            const GlobalSettings& globalSettings,
+                            const WindowLayout& windowLayout) {
+    QJsonObject root;
+
+    QJsonArray groupsArray;
+    for (const auto& group : groups) {
+        groupsArray.append(group.toJson());
+    }
+    root["groups"] = groupsArray;
+
+    QJsonArray sessionsArray;
+    for (auto session : sessions) {
+        session.sshConfig.password = CryptoHelper::encrypt(session.sshConfig.password);
+        session.sshConfig.passphrase = CryptoHelper::encrypt(session.sshConfig.passphrase);
+        sessionsArray.append(session.toJson());
+    }
+    root["sessions"] = sessionsArray;
+
+    QJsonArray btnGroupsArray;
+    for (const auto& group : buttonGroups) {
+        btnGroupsArray.append(group.toJson());
+    }
+    root["buttonGroups"] = btnGroupsArray;
+
+    QJsonArray buttonsArray;
+    for (const auto& btn : quickButtons) {
+        buttonsArray.append(btn.toJson());
+    }
+    root["quickButtons"] = buttonsArray;
+
+    root["globalSettings"] = globalSettings.toJson();
+    root["windowLayout"] = windowLayout.toJson();
+
+    return root;
+}
+}
 
 ConfigManager* ConfigManager::instance_ = nullptr;
 
@@ -31,118 +144,98 @@ QString ConfigManager::configFilePath() {
 }
 
 bool ConfigManager::load() {
-    QFile file(configFilePath());
-    if (!file.open(QIODevice::ReadOnly)) {
-        return false;
-    }
-
-    QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-    file.close();
-
-    if (!doc.isObject()) {
-        return false;
-    }
-
-    QJsonObject root = doc.object();
-
-    // 加载分组
-    groups_.clear();
-    QJsonArray groupsArray = root["groups"].toArray();
-    for (const auto& val : groupsArray) {
-        GroupData group = GroupData::fromJson(val.toObject());
-        groups_[group.id] = group;
-    }
-
-    // 加载会话
-    sessions_.clear();
-    QJsonArray sessionsArray = root["sessions"].toArray();
-    for (const auto& val : sessionsArray) {
-        SessionData session = SessionData::fromJson(val.toObject());
-        // 解密敏感信息
-        session.sshConfig.password = CryptoHelper::decrypt(session.sshConfig.password);
-        session.sshConfig.passphrase = CryptoHelper::decrypt(session.sshConfig.passphrase);
-        sessions_[session.id] = session;
-    }
-
-    // 加载按钮分组
-    buttonGroups_.clear();
-    QJsonArray btnGroupsArray = root["buttonGroups"].toArray();
-    for (const auto& val : btnGroupsArray) {
-        ButtonGroup group = ButtonGroup::fromJson(val.toObject());
-        buttonGroups_[group.id] = group;
-    }
-
-    // 加载快捷按钮
-    quickButtons_.clear();
-    QJsonArray buttonsArray = root["quickButtons"].toArray();
-    for (const auto& val : buttonsArray) {
-        QuickButton btn = QuickButton::fromJson(val.toObject());
-        quickButtons_[btn.id] = btn;
-    }
-
-    // 加载全局设置
-    globalSettings_ = GlobalSettings::fromJson(root["globalSettings"].toObject());
-
-    // 加载 ui 布局
-    if (root.contains("windowLayout")) {
-        windowLayout_ = WindowLayout::fromJson(root["windowLayout"].toObject());
-    }
-
-    return true;
+    return loadConfigFromFile(configFilePath(),
+                              groups_,
+                              sessions_,
+                              buttonGroups_,
+                              quickButtons_,
+                              globalSettings_,
+                              windowLayout_,
+                              nullptr);
 }
 
 bool ConfigManager::save() {
-    QJsonObject root;
+    return exportConfig(configFilePath(), nullptr);
+}
 
-    // 保存分组（按排序顺序）
-    QList<GroupData> sortedGroups = groups();
-    QJsonArray groupsArray;
-    for (const auto& group : sortedGroups) {
-        groupsArray.append(group.toJson());
-    }
-    root["groups"] = groupsArray;
+bool ConfigManager::importConfig(const QString& filePath, QString* errorMessage) {
+    QMap<QString, GroupData> groups;
+    QMap<QString, SessionData> sessions;
+    QMap<QString, ButtonGroup> buttonGroups;
+    QMap<QString, QuickButton> quickButtons;
+    GlobalSettings globalSettings;
+    WindowLayout windowLayout;
 
-    // 保存会话（加密敏感信息，按排序顺序）
-    QList<SessionData> sortedSessions = sessions();
-    QJsonArray sessionsArray;
-    for (auto session : sortedSessions) {
-        session.sshConfig.password = CryptoHelper::encrypt(session.sshConfig.password);
-        session.sshConfig.passphrase = CryptoHelper::encrypt(session.sshConfig.passphrase);
-        sessionsArray.append(session.toJson());
-    }
-    root["sessions"] = sessionsArray;
-
-    // 保存按钮分组（按排序顺序）
-    QList<ButtonGroup> sortedBtnGroups = buttonGroups();
-    QJsonArray btnGroupsArray;
-    for (const auto& group : sortedBtnGroups) {
-        btnGroupsArray.append(group.toJson());
-    }
-    root["buttonGroups"] = btnGroupsArray;
-
-    // 保存快捷按钮（按排序顺序）
-    QList<QuickButton> sortedButtons = quickButtons();
-    QJsonArray buttonsArray;
-    for (const auto& btn : sortedButtons) {
-        buttonsArray.append(btn.toJson());
-    }
-    root["quickButtons"] = buttonsArray;
-
-    // 保存全局设置
-    root["globalSettings"] = globalSettings_.toJson();
-
-    //保存 ui 布局
-    root["windowLayout"] = windowLayout_.toJson();
-
-    QFile file(configFilePath());
-    if (!file.open(QIODevice::WriteOnly)) {
+    if (!loadConfigFromFile(filePath,
+                            groups,
+                            sessions,
+                            buttonGroups,
+                            quickButtons,
+                            globalSettings,
+                            windowLayout,
+                            errorMessage)) {
         return false;
     }
 
-    QJsonDocument doc(root);
-    file.write(doc.toJson(QJsonDocument::Indented));
-    file.close();
+    const auto oldGroups = groups_;
+    const auto oldSessions = sessions_;
+    const auto oldButtonGroups = buttonGroups_;
+    const auto oldQuickButtons = quickButtons_;
+    const auto oldGlobalSettings = globalSettings_;
+    const auto oldWindowLayout = windowLayout_;
 
+    groups_ = groups;
+    sessions_ = sessions;
+    buttonGroups_ = buttonGroups;
+    quickButtons_ = quickButtons;
+    globalSettings_ = globalSettings;
+    windowLayout_ = windowLayout;
+
+    if (!save()) {
+        groups_ = oldGroups;
+        sessions_ = oldSessions;
+        buttonGroups_ = oldButtonGroups;
+        quickButtons_ = oldQuickButtons;
+        globalSettings_ = oldGlobalSettings;
+        windowLayout_ = oldWindowLayout;
+        if (errorMessage) {
+            *errorMessage = QObject::tr("Failed to save imported configuration.");
+        }
+        return false;
+    }
+
+    emit sessionTreeUpdated();
+    emit buttonGroupsChanged();
+    emit quickButtonsChanged();
+    emit globalSettingsChanged();
+    return true;
+}
+
+bool ConfigManager::exportConfig(const QString& filePath, QString* errorMessage) {
+    const QJsonObject root = buildConfigJson(groups(),
+                                             sessions(),
+                                             buttonGroups(),
+                                             quickButtons(),
+                                             globalSettings_,
+                                             windowLayout_);
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::WriteOnly)) {
+        if (errorMessage) {
+            *errorMessage = QObject::tr("Cannot write file: %1").arg(file.errorString());
+        }
+        return false;
+    }
+
+    const QJsonDocument doc(root);
+    if (file.write(doc.toJson(QJsonDocument::Indented)) == -1) {
+        if (errorMessage) {
+            *errorMessage = QObject::tr("Write failed: %1").arg(file.errorString());
+        }
+        file.close();
+        return false;
+    }
+    file.close();
     return true;
 }
 

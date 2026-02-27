@@ -14,6 +14,8 @@ public:
     // 加载/保存配置
     bool load();
     bool save();
+    bool importConfig(const QString& filePath, QString* errorMessage = nullptr);
+    bool exportConfig(const QString& filePath, QString* errorMessage = nullptr);
 
     static QString configFilePath();
     

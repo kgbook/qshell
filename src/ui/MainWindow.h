@@ -38,6 +38,8 @@ private slots:
     void onSendKey(const QString& keyName);
 
     void onSettingsAction();
+    void onImportConfigAction();
+    void onExportConfigAction();
     void onConnectAction();
     void onExitAction();
 
@@ -112,6 +114,8 @@ private:
     QIcon *fullscreenIcon_ = nullptr;
 
     QAction *settingsAction_ = nullptr;
+    QAction *importConfigAction_ = nullptr;
+    QAction *exportConfigAction_ = nullptr;
     QAction *connectAction_ = nullptr;
     QAction *disConnectAction_ = nullptr;
     QAction *exitAction_ = nullptr;
