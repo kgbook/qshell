@@ -252,6 +252,14 @@ void LuaScriptEngine::registerAppModule(sol::table& qshell) {
     qshell.set_function("getVersionStr", []() {
         return QCoreApplication::applicationVersion().toStdString();
     });
+
+    qshell.set_function("exit", [this](sol::optional<int> code) {
+        const int exitCode = code.value_or(0);
+        gShouldStop = true;
+        QMetaObject::invokeMethod(mainWindow_, [exitCode]() {
+            QCoreApplication::exit(exitCode);
+        }, Qt::QueuedConnection);
+    });
 }
 
 // ========== qshell.screen 模块 ==========

@@ -38,3 +38,5 @@ qshell.timer.clearAll()
 -- 示例 5: 获取活动定时器数量
 local activeTimers = qshell.timer.count()
 qshell.log("Active timers: " .. activeTimers)
+
+qshell.exit()
