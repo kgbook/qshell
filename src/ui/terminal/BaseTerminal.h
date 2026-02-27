@@ -5,6 +5,7 @@
 #include "core/datatype.h"
 #include <QFile>
 #include <QMenu>
+#include <QColorDialog>
 
 class IPtyProcess;
 
@@ -26,8 +27,8 @@ public:
     QString logFilePath() const;
     QString getSessionName() const;
 
-signals:
-    void onSessionError(BaseTerminal *terminal);
+    signals:
+        void onSessionError(BaseTerminal *terminal);
     void loggingStateChanged(bool isLogging);
 
 protected:
@@ -44,6 +45,10 @@ private:
     void startLogging(const QString &filePath);
     void stopLogging();
     void writeToLog(const QString &line);
+
+    // 高亮菜单相关方法
+    void buildHighlightMenu(QMenu *parentMenu);
+    static QColor generateRandomColor();
 
 protected:
     SessionData sessionData_;

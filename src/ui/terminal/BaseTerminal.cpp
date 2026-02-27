@@ -10,6 +10,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDateTime>
+#include <QColorDialog>
+#include <QRandomGenerator>
 
 BaseTerminal::BaseTerminal(QWidget *parent) : QTermWidget(parent, parent) {
     connect_ = false;
@@ -159,6 +161,13 @@ void BaseTerminal::contextMenuEvent(QContextMenuEvent *event) {
 
     menu.addSeparator();
 
+    // 高亮菜单
+    QMenu *highlightMenu = menu.addMenu(tr("高亮"));
+    highlightMenu->setIcon(QIcon::fromTheme("edit-select-all"));
+    buildHighlightMenu(highlightMenu);
+
+    menu.addSeparator();
+
     // 日志保存操作
     QAction *logAction = nullptr;
     if (logging_) {
@@ -180,6 +189,116 @@ void BaseTerminal::contextMenuEvent(QContextMenuEvent *event) {
     });
 
     menu.exec(event->globalPos());
+}
+
+void BaseTerminal::buildHighlightMenu(QMenu *parentMenu) {
+    QString selected = selectedText().trimmed();
+    bool hasSelection = !selected.isEmpty();
+    QMap<QString, QColor> highlights = getHighLightTexts();
+
+    if (hasSelection) {
+        // 高亮（随机颜色）
+        QAction *highlightRandomAction = parentMenu->addAction(tr("高亮（随机颜色）"));
+        highlightRandomAction->setIcon(QIcon::fromTheme("color-picker"));
+        QObject::connect(highlightRandomAction, &QAction::triggered, this, [this, selected]() {
+            QColor randomColor = generateRandomColor();
+            addHighLightText(selected, randomColor);
+        });
+
+        // 高亮（自定义）
+        QAction *highlightCustomAction = parentMenu->addAction(tr("高亮（自定义）..."));
+        highlightCustomAction->setIcon(QIcon::fromTheme("color-management"));
+        QObject::connect(highlightCustomAction, &QAction::triggered, this, [this, selected]() {
+            QColor initialColor = Qt::yellow;
+            // 如果已经有高亮，使用当前颜色作为初始颜色
+            if (isContainHighLightText(selected)) {
+                QMap<QString, QColor> highlightList = getHighLightTexts();
+                if (highlightList.contains(selected)) {
+                    initialColor = highlightList.value(selected);
+                }
+            }
+            QColor color = QColorDialog::getColor(initialColor, this, tr("选择高亮颜色"));
+            if (color.isValid()) {
+                addHighLightText(selected, color);
+            }
+        });
+
+        // 取消高亮（仅当选中文本已被高亮时显示）
+        if (isContainHighLightText(selected)) {
+            QAction *removeHighlightAction = parentMenu->addAction(tr("取消高亮"));
+            removeHighlightAction->setIcon(QIcon::fromTheme("edit-clear"));
+            QObject::connect(removeHighlightAction, &QAction::triggered, this, [this, selected]() {
+                removeHighLightText(selected);
+            });
+        }
+
+        parentMenu->addSeparator();
+    }
+
+    // 清除所有高亮
+    QAction *clearHighlightAction = parentMenu->addAction(tr("清除所有高亮"));
+    clearHighlightAction->setIcon(QIcon::fromTheme("edit-clear-all"));
+    clearHighlightAction->setEnabled(!highlights.isEmpty());
+    QObject::connect(clearHighlightAction, &QAction::triggered, this, [this]() {
+        clearHighLightTexts();
+    });
+
+    // 如果有高亮项，直接列出
+    if (!highlights.isEmpty()) {
+        parentMenu->addSeparator();
+
+        for (auto it = highlights.begin(); it != highlights.end(); ++it) {
+            const QString &text = it.key();
+            const QColor &color = it.value();
+
+            // 截断过长的文本用于显示
+            QString displayText = text;
+            if (displayText.length() > 30) {
+                displayText = displayText.left(27) + "...";
+            }
+
+            // 为每个高亮项创建子菜单
+            QMenu *itemMenu = parentMenu->addMenu(displayText);
+
+            // 创建颜色图标
+            QPixmap pixmap(16, 16);
+            pixmap.fill(color);
+            itemMenu->setIcon(QIcon(pixmap));
+
+            // 显示完整文本（如果被截断）
+            if (text != displayText) {
+                QAction *fullTextAction = itemMenu->addAction(tr("文本: %1").arg(text));
+                fullTextAction->setEnabled(false);
+                itemMenu->addSeparator();
+            }
+
+            // 删除选项
+            QAction *deleteAction = itemMenu->addAction(tr("删除"));
+            deleteAction->setIcon(QIcon::fromTheme("edit-delete"));
+            QObject::connect(deleteAction, &QAction::triggered, this, [this, text]() {
+                removeHighLightText(text);
+            });
+
+            // 更改颜色选项
+            QAction *changeColorAction = itemMenu->addAction(tr("更改颜色..."));
+            changeColorAction->setIcon(QIcon::fromTheme("color-picker"));
+            QObject::connect(changeColorAction, &QAction::triggered, this, [this, text, color]() {
+                QColor newColor = QColorDialog::getColor(color, this, tr("选择新的高亮颜色"));
+                if (newColor.isValid()) {
+                    removeHighLightText(text);
+                    addHighLightText(text, newColor);
+                }
+            });
+        }
+    }
+}
+
+QColor BaseTerminal::generateRandomColor() {
+    // 生成饱和度和亮度较高的随机颜色，确保可见性好
+    int hue = QRandomGenerator::global()->bounded(360);
+    int saturation = 150 + QRandomGenerator::global()->bounded(106);  // 150-255
+    int value = 180 + QRandomGenerator::global()->bounded(76);        // 180-255
+    return QColor::fromHsv(hue, saturation, value);
 }
 
 void BaseTerminal::onToggleLogging() {
