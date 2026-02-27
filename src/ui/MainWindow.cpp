@@ -460,6 +460,9 @@ void MainWindow::onCopySelectedAction() {
 }
 
 void MainWindow::onCopyAllAction() {
+    if (currentTab_ == nullptr) {
+        return;
+    }
     currentTab_->setSelectionStart(0, 0);
     currentTab_->setSelectionEnd(currentTab_->screenLinesCount(), currentTab_->screenColumnsCount());
     currentTab_->copyClipboard();
