@@ -297,6 +297,14 @@ void LuaScriptEngine::registerScreenModule(sol::table& qshell)
         return text.toStdString();
     });
 
+    screen.set_function("containString", [this](const std::string& str) -> bool {
+        QString screenText;
+        QMetaObject::invokeMethod(mainWindow_, "getScreenText",
+                                  Qt::BlockingQueuedConnection,
+                                  Q_RETURN_ARG(QString, screenText));
+        return screenText.contains(QString::fromStdString(str));
+    });
+
 
     screen.set_function("clear", [this]() {
         QMetaObject::invokeMethod(mainWindow_, "onClearScreenAction",

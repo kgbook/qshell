@@ -135,6 +135,24 @@ end
 
 ---
 
+#### `qshell.screen.containString(str)`
+判断当前屏幕内容是否包含指定字符串。
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `str` | string | 要查找的字符串 |
+
+**返回值**: `boolean` - `true` 表示包含，`false` 表示不包含
+
+example:
+```lua
+if qshell.screen.containString("login:") then
+    qshell.log("发现登录提示")
+end
+```
+
+---
+
 #### `qshell.screen.clear()`
 清除当前终端屏幕。
 
@@ -495,5 +513,4 @@ end
 
 qshell.showMessage("exec script finish")
 ```
-
 
