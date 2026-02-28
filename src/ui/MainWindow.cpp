@@ -98,7 +98,7 @@ void MainWindow::showEvent(QShowEvent *event) {
     }
 }
 
-bool MainWindow::runScriptAtStartup(const QString &scriptPath) {
+bool MainWindow::runScriptAtStartup(const QString &scriptPath, const QStringList &scriptArgs) {
     if (scriptPath.isEmpty()) {
         qWarning() << "Startup script path is empty";
         return false;
@@ -109,7 +109,7 @@ bool MainWindow::runScriptAtStartup(const QString &scriptPath) {
         return false;
     }
 
-    runScript(scriptPath);
+    runScript(scriptPath, scriptArgs);
     return true;
 }
 
@@ -707,9 +707,9 @@ void MainWindow::onRecentScriptTriggered() {
     }
 }
 
-void MainWindow::runScript(const QString &scriptPath) {
+void MainWindow::runScript(const QString &scriptPath, const QStringList &scriptArgs) {
     qDebug() << "Running script:" << scriptPath;
-    auto runner = new ScriptRunner(luaEngine_, scriptPath);
+    auto runner = new ScriptRunner(luaEngine_, scriptPath, scriptArgs);
     connect(runner, &QThread::finished, runner, &QObject::deleteLater);
     runner->start();
     stopScriptAction_->setEnabled(true);

@@ -2,6 +2,7 @@
 #pragma once
 #include <QObject>
 #include <QString>
+#include <QStringList>
 #include <QRegularExpression>
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -18,7 +19,7 @@ class LuaScriptEngine : public QObject {
 public:
     explicit LuaScriptEngine(MainWindow *window);
 
-    bool executeScript(const QString &scriptPath);
+    bool executeScript(const QString &scriptPath, const QStringList &scriptArgs = {});
     bool executeCode(const QString &code);
     bool isRunning();
     static void stopScript();

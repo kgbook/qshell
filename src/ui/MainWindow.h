@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QShortcut>
+#include <QStringList>
 
 class SessionTabWidget;
 class SessionTreeWidget;
@@ -19,7 +20,7 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override = default;
     void showEvent(QShowEvent *event) override;
-    bool runScriptAtStartup(const QString &scriptPath);
+    bool runScriptAtStartup(const QString &scriptPath, const QStringList &scriptArgs = {});
     Q_INVOKABLE QString getScreenText() const;
     Q_INVOKABLE QString getLastLine() const;
     Q_INVOKABLE bool openSessionById(const QString& sessionId);
@@ -79,7 +80,7 @@ private:
     void restoreLayoutState();
     void exitFullscreen();
 
-    void runScript(const QString &scriptPath);
+    void runScript(const QString &scriptPath, const QStringList &scriptArgs = {});
     void addRecentScript(const QString &scriptPath);
     void loadRecentScripts();
     void saveRecentScripts();

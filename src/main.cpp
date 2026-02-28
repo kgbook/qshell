@@ -66,16 +66,19 @@ int main(int argc, char *argv[])
         "path"
     );
     parser.addOption(scriptOption);
+    parser.addPositionalArgument("script-args",
+                                 "Arguments passed to Lua script (use `--` before args).");
     parser.process(a);
 
     const QString startupScriptPath = parser.value(scriptOption).trimmed();
+    const QStringList startupScriptArgs = parser.positionalArguments();
 
     MainWindow w;
     w.show();
 
     if (!startupScriptPath.isEmpty()) {
-        QTimer::singleShot(0, &w, [startupScriptPath, &w]() {
-            w.runScriptAtStartup(startupScriptPath);
+        QTimer::singleShot(0, &w, [startupScriptPath, startupScriptArgs, &w]() {
+            w.runScriptAtStartup(startupScriptPath, startupScriptArgs);
         });
     }
 

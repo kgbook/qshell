@@ -690,7 +690,7 @@ sol::table LuaScriptEngine::performHttpRequest(const std::string& method,
     return result;
 }
 
-bool LuaScriptEngine::executeScript(const QString& scriptPath)
+bool LuaScriptEngine::executeScript(const QString& scriptPath, const QStringList& scriptArgs)
 {
     QFileInfo fileInfo(scriptPath);
     QString scriptDir = fileInfo.absolutePath();
@@ -705,6 +705,14 @@ bool LuaScriptEngine::executeScript(const QString& scriptPath)
     lua_["package"]["path"] = dirPath + "/?.lua;"
                            + dirPath + "/?/init.lua;"
                            + currentPath;
+
+    // 与 lua 命令行兼容：arg[0] 为脚本路径，arg[1..n] 为参数
+    sol::table argTable = lua_.create_table();
+    argTable[0] = scriptPath.toStdString();
+    for (int i = 0; i < scriptArgs.size(); ++i) {
+        argTable[i + 1] = scriptArgs.at(i).toStdString();
+    }
+    lua_["arg"] = argTable;
 
     running_ = true;
     gShouldStop = false;  // 重置停止标志
