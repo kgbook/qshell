@@ -206,10 +206,17 @@ void MainWindow::onTabChanged(int index) {
 }
 
 void MainWindow::onTabCloseRequested(int index) const {
-    auto *tab = dynamic_cast<BaseTerminal *>(tabWidget_->widget(index));
-    tab->disconnect();
+    if (index < 0 || index >= tabWidget_->count()) {
+        return;
+    }
+
+    QWidget *widget = tabWidget_->widget(index);
+    auto *tab = dynamic_cast<BaseTerminal *>(widget);
+    if (tab != nullptr) {
+        tab->disconnect();
+    }
     tabWidget_->removeTab(index);
-    delete tab;
+    delete widget;
 }
 
 void MainWindow::onCommandSend(const QString &command) {
@@ -443,9 +450,10 @@ void MainWindow::onConnectAction() {
     if (currentTab_->isConnect()) {
         connectAction_->setEnabled(false);
         disConnectAction_->setEnabled(true);
+        tabWidget_->setTabIcon(tabWidget_->currentIndex(), *connectStateIcon_);
+    } else {
+        tabWidget_->setTabIcon(tabWidget_->currentIndex(), *disconnectStateIcon_);
     }
-
-    tabWidget_->setTabIcon(tabWidget_->currentIndex(), *connectStateIcon_);
 }
 
 void MainWindow::onDisconnectAction() const {
@@ -462,11 +470,13 @@ void MainWindow::onDisconnectAction() const {
 }
 
 void MainWindow::onExitAction() {
-    BaseTerminal *terminal = nullptr;
-    while (nullptr != (terminal = dynamic_cast<BaseTerminal *>(tabWidget_->currentWidget()))) {
-        terminal->disconnect();
+    for (int i = 0; i < tabWidget_->count(); ++i) {
+        auto *terminal = dynamic_cast<BaseTerminal *>(tabWidget_->widget(i));
+        if (terminal != nullptr) {
+            terminal->disconnect();
+        }
     }
-    exit(0);
+    QApplication::exit(0);
 }
 
 void MainWindow::onCopySelectedAction() {
