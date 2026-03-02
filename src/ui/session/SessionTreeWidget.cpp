@@ -59,7 +59,7 @@ void SessionTreeWidget::loadData() {
 }
 
 void SessionTreeWidget::refreshTree() {
-    qDebug() << "SessionTreeWidget::refreshTree";
+    // qDebug() << "SessionTreeWidget::refreshTree";
     this->clear();
 
     auto config = ConfigManager::instance();
@@ -67,7 +67,7 @@ void SessionTreeWidget::refreshTree() {
     // 添加分组
     QMap<QString, QTreeWidgetItem *> groupItems;
     for (const auto &group: config->groups()) {
-        qDebug() << "add group:" << group.name;
+        // qDebug() << "add group:" << group.name;
         auto *item = new QTreeWidgetItem(this);
         item->setText(0, group.name);
         item->setData(0, ItemTypeRole, GroupItem);
@@ -80,7 +80,7 @@ void SessionTreeWidget::refreshTree() {
 
     // 添加会话
     for (const auto &session: config->sessions()) {
-        qDebug() << "add session:" << session.name;
+        // qDebug() << "add session:" << session.name;
         QTreeWidgetItem *parent = nullptr;
         if (!session.groupId.isEmpty() && groupItems.contains(session.groupId)) {
             parent = groupItems[session.groupId];

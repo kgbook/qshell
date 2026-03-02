@@ -42,8 +42,6 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(qtermwidget);
     QApplication a(argc, argv);
     showConsole(ConfigManager::instance()->globalSettings().debug);
-    qDebug() << "style list:" << QStyleFactory::keys();
-    QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     // 设置应用信息
     QCoreApplication::setApplicationName("qshell");

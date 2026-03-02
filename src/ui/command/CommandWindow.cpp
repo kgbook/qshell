@@ -90,7 +90,7 @@ void CommandWindow::loadHistory() {
     }
 
     historyIndex_ = history_.size();
-    qDebug() << "Loaded" << history_.size() << "history entries from" << historyFilePath_;
+    // qDebug() << "Loaded" << history_.size() << "history entries from" << historyFilePath_;
 }
 
 void CommandWindow::saveHistory() {

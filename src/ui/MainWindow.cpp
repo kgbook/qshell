@@ -195,7 +195,7 @@ void MainWindow::restoreLayoutState() {
 }
 
 void MainWindow::onTabChanged(int index) {
-    qDebug() << "onTabChanged, index = " << index;
+    // qDebug() << "onTabChanged, index = " << index;
 
     if (index < 0) {
         currentTab_ = nullptr;
