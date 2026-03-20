@@ -41,13 +41,13 @@ int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(qtermwidget);
     QApplication a(argc, argv);
-    showConsole(ConfigManager::instance()->globalSettings().debug);
 
     // 设置应用信息
     QCoreApplication::setApplicationName("qshell");
     QCoreApplication::setApplicationVersion(APP_VERSION);
     QCoreApplication::setOrganizationName("qiushao");
     QCoreApplication::setOrganizationDomain("https://github.com/qiushao/qshell");
+    showConsole(ConfigManager::instance()->globalSettings().debug);
 
     // 读取版本信息
     QString version = QCoreApplication::applicationVersion();
