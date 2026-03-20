@@ -32,6 +32,7 @@ private:
     QComboBox *colorSchemeEdit_ = nullptr;
     QCheckBox *copyOnSelectCheckBox_ = nullptr;
     QCheckBox *debugCheckBox_ = nullptr;
+    QCheckBox *logTimestampCheckBox_ = nullptr;
 
     QHBoxLayout *buttonLayout_ = nullptr;
     QPushButton *okButton_ = nullptr;

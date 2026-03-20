@@ -278,6 +278,7 @@ struct GlobalSettings {
     QString colorScheme = "Tango";
     bool copyOnSelect = false;
     bool debug = true;
+    bool logTimestamp = true;
 
     QJsonObject toJson() const {
         QJsonObject obj;
@@ -286,6 +287,7 @@ struct GlobalSettings {
         obj["colorScheme"] = colorScheme;
         obj["copyOnSelect"] = copyOnSelect;
         obj["debug"] = debug;
+        obj["logTimestamp"] = logTimestamp;
         return obj;
     }
 
@@ -296,6 +298,7 @@ struct GlobalSettings {
         settings.colorScheme = obj["colorScheme"].toString("Tango");
         settings.copyOnSelect = obj["copyOnSelect"].toBool();
         settings.debug = obj["debug"].toBool();
+        settings.logTimestamp = obj["logTimestamp"].toBool(true);
         return settings;
     }
 };

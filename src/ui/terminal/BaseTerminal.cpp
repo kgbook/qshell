@@ -414,7 +414,11 @@ void BaseTerminal::writeToLog(const QString &line) {
         return;
     }
 
-    // 直接写入原始数据
+    if (ConfigManager::instance()->globalSettings().logTimestamp) {
+        const QString timestamp = QDateTime::currentDateTime().toString("[yyyy-MM-dd HH:mm:ss.zzz] ");
+        logFile_->write(timestamp.toUtf8());
+    }
+
     logFile_->write(line.toUtf8());
     logFile_->write("\n");
 

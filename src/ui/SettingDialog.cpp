@@ -11,6 +11,7 @@ SettingDialog::SettingDialog(QWidget *parent) :QDialog(parent) {
     colorSchemeEdit_->setCurrentText(config->globalSettings().colorScheme);
     copyOnSelectCheckBox_->setChecked(config->globalSettings().copyOnSelect);
     debugCheckBox_->setChecked(config->globalSettings().debug);
+    logTimestampCheckBox_->setChecked(config->globalSettings().logTimestamp);
 }
 
 SettingDialog::~SettingDialog() = default;
@@ -39,6 +40,10 @@ void SettingDialog::initWidgets() {
     debugCheckBox_->setToolTip(tr("Enable debug log console"));
     formLayout_->addRow(tr("Enable debug"), debugCheckBox_);
 
+    logTimestampCheckBox_ = new QCheckBox(this);
+    logTimestampCheckBox_->setToolTip(tr("Add a system timestamp before each saved log line"));
+    formLayout_->addRow(tr("Log Timestamp:"), logTimestampCheckBox_);
+
     buttonLayout_ = new QHBoxLayout(this);
     mainLayout_->addLayout(buttonLayout_);
 
@@ -65,6 +70,7 @@ void SettingDialog::onOK() {
     settings.colorScheme = colorSchemeEdit_->currentText();
     settings.copyOnSelect = copyOnSelectCheckBox_->isChecked();
     settings.debug = debugCheckBox_->isChecked();
+    settings.logTimestamp = logTimestampCheckBox_->isChecked();
     ConfigManager::instance()->setGlobalSettings(settings);
     close();
 }
