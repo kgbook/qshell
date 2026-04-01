@@ -700,6 +700,17 @@ sol::table LuaScriptEngine::performHttpRequest(const std::string& method,
 
 bool LuaScriptEngine::executeScript(const QString& scriptPath, const QStringList& scriptArgs)
 {
+#ifdef Q_OS_WIN
+    // Windows 下检测路径是否包含非 ASCII 字符（中文等）
+    static const QRegularExpression nonAsciiRe(QStringLiteral("[^\\x00-\\x7F]"));
+    if (scriptPath.contains(nonAsciiRe)) {
+        emit scriptError(tr("脚本路径包含中文或其他非 ASCII 字符，Windows 下暂不支持。\n"
+                            "请将脚本移动到纯英文路径下再运行。\n\n"
+                            "当前路径: %1").arg(scriptPath));
+        return false;
+    }
+#endif
+
     QFileInfo fileInfo(scriptPath);
     QString scriptDir = fileInfo.absolutePath();
 

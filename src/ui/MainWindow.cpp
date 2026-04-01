@@ -51,10 +51,11 @@ void MainWindow::initLuaEngine() {
         stopScriptAction_->setEnabled(false);
         runLuaScriptAction_->setEnabled(true);
     });
-    QObject::connect(luaEngine_, &LuaScriptEngine::scriptError, this, [this]() {
+    QObject::connect(luaEngine_, &LuaScriptEngine::scriptError, this, [this](const QString &error) {
         qDebug() << "Running script error";
         stopScriptAction_->setEnabled(false);
         runLuaScriptAction_->setEnabled(true);
+        QMessageBox::warning(this, tr("脚本执行错误"), error);
     });
 }
 
