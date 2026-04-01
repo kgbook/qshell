@@ -709,13 +709,25 @@ void MainWindow::onRecentScriptTriggered() {
         if (QFile::exists(scriptPath)) {
             runScript(scriptPath);
         } else {
-            // 文件不存在，从列表中移除
-            recentScripts_.removeAll(scriptPath);
-            saveRecentScripts();
-            updateRecentScriptsMenu();
+            // 文件不存在，弹窗询问用户是否从历史列表中移除
+            auto result = QMessageBox::question(
+                this,
+                tr("Script Not Found"),
+                tr("The script file does not exist:\n%1\n\nDo you want to remove it from the recent list?")
+                    .arg(scriptPath),
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::Yes
+            );
+
+            if (result == QMessageBox::Yes) {
+                recentScripts_.removeAll(scriptPath);
+                saveRecentScripts();
+                updateRecentScriptsMenu();
+            }
         }
     }
 }
+
 
 void MainWindow::runScript(const QString &scriptPath, const QStringList &scriptArgs) {
     qDebug() << "Running script:" << scriptPath;
