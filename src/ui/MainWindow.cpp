@@ -769,8 +769,7 @@ void MainWindow::updateRecentScriptsMenu() {
 
     for (int i = 0; i < recentScripts_.size(); ++i) {
         const QString &scriptPath = recentScripts_.at(i);
-        QFileInfo fileInfo(scriptPath);
-        QString displayName = QString("%1. %2").arg(i + 1).arg(fileInfo.fileName());
+        QString displayName = QString("%1. %2").arg(i + 1).arg(scriptPath);
 
         QAction *action = recentScriptMenu_->addAction(displayName);
         action->setData(scriptPath);
@@ -786,6 +785,7 @@ void MainWindow::updateRecentScriptsMenu() {
         updateRecentScriptsMenu();
     });
 }
+
 
 // 在文件末尾添加槽函数实现
 void MainWindow::onDocAction() {
