@@ -10,6 +10,7 @@ class ConfigManager : public QObject {
     
 public:
     static ConfigManager* instance();
+    static QString generateMcpBearerToken();
     
     // 加载/保存配置
     bool load();

@@ -9,6 +9,7 @@
 #include <QFontComboBox>
 #include <QVBoxLayout>
 #include <QCheckBox>
+#include <QHBoxLayout>
 
 
 class SettingDialog : public QDialog  {
@@ -33,6 +34,11 @@ private:
     QCheckBox *copyOnSelectCheckBox_ = nullptr;
     QCheckBox *debugCheckBox_ = nullptr;
     QCheckBox *logTimestampCheckBox_ = nullptr;
+    QCheckBox *mcpEnabledCheckBox_ = nullptr;
+    QLineEdit *mcpPortEdit_ = nullptr;
+    QLineEdit *mcpBearerTokenEdit_ = nullptr;
+    QPushButton *regenerateMcpTokenButton_ = nullptr;
+    QHBoxLayout *mcpTokenLayout_ = nullptr;
 
     QHBoxLayout *buttonLayout_ = nullptr;
     QPushButton *okButton_ = nullptr;

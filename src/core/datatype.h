@@ -279,6 +279,9 @@ struct GlobalSettings {
     bool copyOnSelect = false;
     bool debug = true;
     bool logTimestamp = true;
+    bool mcpEnabled = false;
+    int mcpPort = 8765;
+    QString mcpBearerToken;
 
     QJsonObject toJson() const {
         QJsonObject obj;
@@ -288,6 +291,9 @@ struct GlobalSettings {
         obj["copyOnSelect"] = copyOnSelect;
         obj["debug"] = debug;
         obj["logTimestamp"] = logTimestamp;
+        obj["mcpEnabled"] = mcpEnabled;
+        obj["mcpPort"] = mcpPort;
+        obj["mcpBearerToken"] = mcpBearerToken;
         return obj;
     }
 
@@ -299,6 +305,9 @@ struct GlobalSettings {
         settings.copyOnSelect = obj["copyOnSelect"].toBool();
         settings.debug = obj["debug"].toBool();
         settings.logTimestamp = obj["logTimestamp"].toBool(true);
+        settings.mcpEnabled = obj["mcpEnabled"].toBool(false);
+        settings.mcpPort = obj["mcpPort"].toInt(8765);
+        settings.mcpBearerToken = obj["mcpBearerToken"].toString();
         return settings;
     }
 };

@@ -2,6 +2,7 @@
 #include "SettingDialog.h"
 #include "command/CommandButtonBar.h"
 #include "core/ConfigManager.h"
+#include "mcp/McpHttpServer.h"
 #include "scriptengine/LuaScriptEngine.h"
 #include "scriptengine/ScriptRunner.h"
 #include "session/CollapsibleDockWidget.h"
@@ -14,6 +15,7 @@
 #include "ui/terminal/SerialTerminal.h"
 
 #include <QApplication>
+#include <QDebug>
 #include <QDesktopServices>
 #include <QDockWidget>
 #include <QFile>
@@ -42,6 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     initCommandWindow();
     initButtonBar();
     restoreLayoutState();
+    initMcpServer();
 }
 
 void MainWindow::initLuaEngine() {
@@ -169,6 +172,39 @@ void MainWindow::initButtonBar() {
             this, &MainWindow::onCommandSend);
 }
 
+void MainWindow::initMcpServer() {
+    mcpServer_ = new McpHttpServer(this, this);
+    connect(ConfigManager::instance(), &ConfigManager::globalSettingsChanged,
+            this, &MainWindow::syncMcpServer);
+    syncMcpServer();
+}
+
+void MainWindow::syncMcpServer() {
+    if (mcpServer_ == nullptr) {
+        return;
+    }
+
+    GlobalSettings settings = ConfigManager::instance()->globalSettings();
+    if (!settings.mcpEnabled) {
+        mcpServer_->stop();
+        return;
+    }
+
+    if (settings.mcpBearerToken.trimmed().isEmpty()) {
+        settings.mcpBearerToken = ConfigManager::generateMcpBearerToken();
+        ConfigManager::instance()->setGlobalSettings(settings);
+        return;
+    }
+
+    QString errorMessage;
+    if (!mcpServer_->start(settings.mcpPort, settings.mcpBearerToken, &errorMessage)) {
+        qWarning() << "Failed to start MCP server:" << errorMessage;
+        return;
+    }
+
+    qDebug() << "MCP server listening at" << mcpServer_->endpointUrl();
+}
+
 void MainWindow::restoreLayoutState() {
     auto config = ConfigManager::instance();
     auto layout = config->getWindowLayout();
@@ -221,11 +257,7 @@ void MainWindow::onTabCloseRequested(int index) const {
 }
 
 void MainWindow::onCommandSend(const QString &command) {
-    if (currentTab_ != nullptr) {
-        QString str = command;
-        str.replace(QString("\\r"), QString("\r"));
-        currentTab_->sendText(str);
-    }
+    sendTextToCurrent(command, true);
 }
 
 void MainWindow::initActions() {
@@ -508,9 +540,7 @@ void MainWindow::onFindAction() {
 }
 
 void MainWindow::onClearScreenAction() {
-    if (currentTab_ != nullptr) {
-        currentTab_->clear();
-    }
+    clearCurrentScreen();
 }
 
 void MainWindow::onToggleToolbarAction() {
@@ -817,6 +847,10 @@ void MainWindow::onAboutAction() {
 
 void MainWindow::onSendKey(const QString& keyName)
 {
+    sendKeyToCurrent(keyName);
+}
+
+bool MainWindow::sendKeyToCurrent(const QString& keyName) {
     // 按键名称到按键码的映射
     static const QMap<QString, int> keyMap = {
         {"Enter",     Qt::Key_Return},
@@ -876,11 +910,13 @@ void MainWindow::onSendKey(const QString& keyName)
 
     if (key != 0) {
         // 发送按键事件到终端控件
-        auto* pressEvent = new QKeyEvent(QEvent::KeyPress, key, modifiers);
         if (currentTab_) {
-            currentTab_->sendKeyEvent(pressEvent);
+            QKeyEvent pressEvent(QEvent::KeyPress, key, modifiers);
+            currentTab_->sendKeyEvent(&pressEvent);
+            return true;
         }
     }
+    return false;
 }
 
 QString MainWindow::getScreenText() const {
@@ -945,8 +981,8 @@ void MainWindow::nextTab() const {
 
 bool MainWindow::switchToTab(const QString &tabName) const {
     auto tabCount = tabWidget_->count();
-    if (tabCount < 2) {
-        return true;
+    if (tabCount == 0) {
+        return false;
     }
     for (int i = 0; i < tabCount; i++) {
         auto title = tabWidget_->tabText(i);
@@ -956,6 +992,67 @@ bool MainWindow::switchToTab(const QString &tabName) const {
         }
     }
     return false;
+}
+
+bool MainWindow::switchToTabIndex(int index) const {
+    if (index < 0 || index >= tabWidget_->count()) {
+        return false;
+    }
+    tabWidget_->setCurrentIndex(index);
+    return true;
+}
+
+QString MainWindow::currentTabName() const {
+    if (currentTab_ == nullptr) {
+        return "";
+    }
+
+    const int index = tabWidget_->indexOf(currentTab_);
+    if (index >= 0) {
+        return tabWidget_->tabText(index);
+    }
+    return currentTab_->getSessionName();
+}
+
+bool MainWindow::connectCurrentSession() {
+    if (currentTab_ == nullptr) {
+        return false;
+    }
+    if (!currentTab_->isConnect()) {
+        onConnectAction();
+    }
+    return currentTab_ != nullptr && currentTab_->isConnect();
+}
+
+bool MainWindow::disconnectCurrentSession() const {
+    if (currentTab_ == nullptr) {
+        return false;
+    }
+    if (currentTab_->isConnect()) {
+        onDisconnectAction();
+    }
+    return currentTab_ != nullptr && !currentTab_->isConnect();
+}
+
+bool MainWindow::sendTextToCurrent(QString text, bool interpretEscapes) {
+    if (currentTab_ == nullptr) {
+        return false;
+    }
+    if (interpretEscapes) {
+        text.replace(QString("\\r"), QString("\r"));
+        text.replace(QString("\\n"), QString("\n"));
+        text.replace(QString("\\t"), QString("\t"));
+    }
+    currentTab_->sendText(text);
+    return true;
+}
+
+bool MainWindow::clearCurrentScreen() {
+    if (currentTab_ == nullptr) {
+        return false;
+    }
+    currentTab_->clear();
+    return true;
 }
 
 BaseTerminal * MainWindow::getCurrentSession() const {

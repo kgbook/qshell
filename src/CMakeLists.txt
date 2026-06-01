@@ -21,6 +21,10 @@ set(SRC_FILES main.cpp
         ui/command/CommandButtonBar.cpp
         scriptengine/LuaScriptEngine.cpp
         scriptengine/ScriptRunner.cpp
+        mcp/McpHttpServer.cpp
+        mcp/McpHttpServer.h
+        mcp/McpToolRegistry.cpp
+        mcp/McpToolRegistry.h
 )
 
 if (CMAKE_SYSTEM_NAME MATCHES "Linux" OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -48,6 +52,7 @@ target_link_libraries(qshell
         Qt::Core
         Qt::Gui
         Qt::Widgets
+        Qt::Network
         Qt::SerialPort
         qtermwidget
         ptyqt

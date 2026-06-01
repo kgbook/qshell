@@ -6,6 +6,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonParseError>
+#include <QRandomGenerator>
 #include <algorithm>
 
 namespace {
@@ -127,6 +128,14 @@ ConfigManager* ConfigManager::instance() {
         instance_ = new ConfigManager();
     }
     return instance_;
+}
+
+QString ConfigManager::generateMcpBearerToken() {
+    QByteArray randomBytes(32, Qt::Uninitialized);
+    for (char& byte : randomBytes) {
+        byte = static_cast<char>(QRandomGenerator::system()->bounded(256));
+    }
+    return QString::fromLatin1(randomBytes.toHex());
 }
 
 ConfigManager::ConfigManager(QObject* parent)

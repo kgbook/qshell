@@ -2,16 +2,22 @@
 #include "qtermwidget.h"
 #include "core/ConfigManager.h"
 
+#include <QIntValidator>
+
 SettingDialog::SettingDialog(QWidget *parent) :QDialog(parent) {
     initWidgets();
     fillColorScheme();
     const auto config = ConfigManager::instance();
-    fontFamilyEdit_->setCurrentText(config->globalSettings().fontFamily);
-    fontSizeEdit_->setText(QString::number(config->globalSettings().fontSize));
-    colorSchemeEdit_->setCurrentText(config->globalSettings().colorScheme);
-    copyOnSelectCheckBox_->setChecked(config->globalSettings().copyOnSelect);
-    debugCheckBox_->setChecked(config->globalSettings().debug);
-    logTimestampCheckBox_->setChecked(config->globalSettings().logTimestamp);
+    const GlobalSettings settings = config->globalSettings();
+    fontFamilyEdit_->setCurrentText(settings.fontFamily);
+    fontSizeEdit_->setText(QString::number(settings.fontSize));
+    colorSchemeEdit_->setCurrentText(settings.colorScheme);
+    copyOnSelectCheckBox_->setChecked(settings.copyOnSelect);
+    debugCheckBox_->setChecked(settings.debug);
+    logTimestampCheckBox_->setChecked(settings.logTimestamp);
+    mcpEnabledCheckBox_->setChecked(settings.mcpEnabled);
+    mcpPortEdit_->setText(QString::number(settings.mcpPort));
+    mcpBearerTokenEdit_->setText(settings.mcpBearerToken);
 }
 
 SettingDialog::~SettingDialog() = default;
@@ -44,6 +50,23 @@ void SettingDialog::initWidgets() {
     logTimestampCheckBox_->setToolTip(tr("Add a system timestamp before each saved log line"));
     formLayout_->addRow(tr("Log Timestamp:"), logTimestampCheckBox_);
 
+    mcpEnabledCheckBox_ = new QCheckBox(this);
+    mcpEnabledCheckBox_->setToolTip(tr("Enable local MCP control endpoint on 127.0.0.1"));
+    formLayout_->addRow(tr("Enable MCP:"), mcpEnabledCheckBox_);
+
+    mcpPortEdit_ = new QLineEdit(this);
+    mcpPortEdit_->setValidator(new QIntValidator(1, 65535, mcpPortEdit_));
+    formLayout_->addRow(tr("MCP Port:"), mcpPortEdit_);
+
+    mcpBearerTokenEdit_ = new QLineEdit(this);
+    mcpBearerTokenEdit_->setReadOnly(true);
+    mcpBearerTokenEdit_->setMinimumWidth(420);
+    regenerateMcpTokenButton_ = new QPushButton(tr("Regenerate"), this);
+    mcpTokenLayout_ = new QHBoxLayout();
+    mcpTokenLayout_->addWidget(mcpBearerTokenEdit_);
+    mcpTokenLayout_->addWidget(regenerateMcpTokenButton_);
+    formLayout_->addRow(tr("MCP Token:"), mcpTokenLayout_);
+
     buttonLayout_ = new QHBoxLayout(this);
     mainLayout_->addLayout(buttonLayout_);
 
@@ -54,6 +77,9 @@ void SettingDialog::initWidgets() {
 
     QObject::connect(okButton_, &QPushButton::clicked, this, &SettingDialog::onOK);
     QObject::connect(cancelButton_, &QPushButton::clicked, this, &SettingDialog::onCancel);
+    QObject::connect(regenerateMcpTokenButton_, &QPushButton::clicked, this, [this]() {
+        mcpBearerTokenEdit_->setText(ConfigManager::generateMcpBearerToken());
+    });
 }
 
 void SettingDialog::fillColorScheme() {
@@ -71,6 +97,15 @@ void SettingDialog::onOK() {
     settings.copyOnSelect = copyOnSelectCheckBox_->isChecked();
     settings.debug = debugCheckBox_->isChecked();
     settings.logTimestamp = logTimestampCheckBox_->isChecked();
+    settings.mcpEnabled = mcpEnabledCheckBox_->isChecked();
+    settings.mcpPort = mcpPortEdit_->text().toInt();
+    if (settings.mcpPort < 1 || settings.mcpPort > 65535) {
+        settings.mcpPort = 8765;
+    }
+    settings.mcpBearerToken = mcpBearerTokenEdit_->text().trimmed();
+    if (settings.mcpEnabled && settings.mcpBearerToken.isEmpty()) {
+        settings.mcpBearerToken = ConfigManager::generateMcpBearerToken();
+    }
     ConfigManager::instance()->setGlobalSettings(settings);
     close();
 }

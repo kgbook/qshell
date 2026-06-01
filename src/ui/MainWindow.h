@@ -12,6 +12,7 @@ class CommandWindow;
 class BaseTerminal;
 class CollapsibleDockWidget;
 class LuaScriptEngine;
+class McpHttpServer;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -28,6 +29,13 @@ public:
     Q_INVOKABLE int tabCount() const;
     Q_INVOKABLE void nextTab() const;
     Q_INVOKABLE bool switchToTab(const QString& tabName) const;
+    Q_INVOKABLE bool switchToTabIndex(int index) const;
+    Q_INVOKABLE QString currentTabName() const;
+    Q_INVOKABLE bool connectCurrentSession();
+    Q_INVOKABLE bool disconnectCurrentSession() const;
+    Q_INVOKABLE bool sendTextToCurrent(QString text, bool interpretEscapes = true);
+    Q_INVOKABLE bool sendKeyToCurrent(const QString& keyName);
+    Q_INVOKABLE bool clearCurrentScreen();
     BaseTerminal* getCurrentSession() const;
 
 private slots:
@@ -66,6 +74,7 @@ private slots:
     // Help menu slots
     static void onDocAction();
     void onAboutAction();
+    void syncMcpServer();
 
 private:
     void initLuaEngine();
@@ -77,6 +86,7 @@ private:
     void initTableWidget();
     void initCommandWindow();
     void initButtonBar();
+    void initMcpServer();
     void restoreLayoutState();
     void exitFullscreen();
 
@@ -168,6 +178,7 @@ private:
     QShortcut *escShortcut_ = nullptr;
 
     LuaScriptEngine *luaEngine_ = nullptr;
+    McpHttpServer *mcpServer_ = nullptr;
 };
 
 #endif // QSHELL_MAINWINDOW_H
