@@ -335,6 +335,23 @@ void CommandButtonBar::onButtonContextMenu(const QPoint &pos) {
 
     menu.addSeparator();
 
+    // 移动到分组
+    auto allGroups = ConfigManager::instance()->buttonGroups();
+    auto button = ConfigManager::instance()->quickButton(buttonId);
+    if (!allGroups.isEmpty() && allGroups.size() > 1) {
+        QMenu *moveToGroupMenu = menu.addMenu(tr("移动到分组"));
+        for (const auto &group : allGroups) {
+            if (group.id == button.groupId) continue;
+            QAction *moveAction = moveToGroupMenu->addAction(group.name);
+            connect(moveAction, &QAction::triggered, this, [buttonId, groupId = group.id]() {
+                auto qb = ConfigManager::instance()->quickButton(buttonId);
+                qb.groupId = groupId;
+                ConfigManager::instance()->updateQuickButton(qb);
+            });
+        }
+        menu.addSeparator();
+    }
+
     // 上移/下移
     QAction *moveUpAction = menu.addAction(tr("左移"));
     connect(moveUpAction, &QAction::triggered, this, [buttonId]() {
