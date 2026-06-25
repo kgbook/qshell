@@ -3,7 +3,7 @@
 
 #include <QComboBox>
 #include <QPushButton>
-#include <QHBoxLayout>
+#include <QLayout>
 #include <QMenu>
 #include <QAction>
 #include <QInputDialog>
@@ -15,6 +15,121 @@
 #include <QDialogButtonBox>
 #include <QLabel>
 #include <QContextMenuEvent>
+#include <QList>
+#include <QResizeEvent>
+#include <QSizePolicy>
+#include <QTimer>
+
+namespace {
+
+class FlowLayout : public QLayout {
+public:
+    explicit FlowLayout(QWidget *parent, int spacing)
+        : QLayout(parent)
+        , spacing_(spacing) {
+    }
+
+    ~FlowLayout() override {
+        QLayoutItem *item = nullptr;
+        while ((item = takeAt(0)) != nullptr) {
+            delete item;
+        }
+    }
+
+    void addItem(QLayoutItem *item) override {
+        items_.append(item);
+    }
+
+    [[nodiscard]] int count() const override {
+        return static_cast<int>(items_.size());
+    }
+
+    [[nodiscard]] QLayoutItem *itemAt(int index) const override {
+        if (index < 0 || index >= items_.size()) {
+            return nullptr;
+        }
+        return items_.at(index);
+    }
+
+    QLayoutItem *takeAt(int index) override {
+        if (index < 0 || index >= items_.size()) {
+            return nullptr;
+        }
+        return items_.takeAt(index);
+    }
+
+    [[nodiscard]] Qt::Orientations expandingDirections() const override {
+        return {};
+    }
+
+    [[nodiscard]] bool hasHeightForWidth() const override {
+        return true;
+    }
+
+    [[nodiscard]] int heightForWidth(int width) const override {
+        return doLayout(QRect(0, 0, width, 0), true);
+    }
+
+    [[nodiscard]] QSize minimumSize() const override {
+        QSize size;
+        for (const auto *item : items_) {
+            size = size.expandedTo(item->minimumSize());
+        }
+        const QMargins margins = contentsMargins();
+        size += QSize(margins.left() + margins.right(), margins.top() + margins.bottom());
+        return size;
+    }
+
+    [[nodiscard]] QSize sizeHint() const override {
+        return minimumSize();
+    }
+
+    void setGeometry(const QRect &rect) override {
+        QLayout::setGeometry(rect);
+        const int height = doLayout(rect, false);
+        Q_UNUSED(height)
+    }
+
+private:
+    [[nodiscard]] int doLayout(const QRect &rect, bool testOnly) const {
+        const QMargins margins = contentsMargins();
+        const QRect effectiveRect = rect.adjusted(margins.left(),
+                                                  margins.top(),
+                                                  -margins.right(),
+                                                  -margins.bottom());
+        int x = effectiveRect.x();
+        int y = effectiveRect.y();
+        int lineHeight = 0;
+
+        for (auto *item : items_) {
+            const QSize itemSize = item->sizeHint();
+            int nextX = x + itemSize.width() + spacing_;
+            if (x > effectiveRect.x() && nextX - spacing_ > effectiveRect.right()) {
+                x = effectiveRect.x();
+                y += lineHeight + spacing_;
+                nextX = x + itemSize.width() + spacing_;
+                lineHeight = 0;
+            }
+
+            if (!testOnly) {
+                item->setGeometry(QRect(QPoint(x, y), itemSize));
+            }
+
+            x = nextX;
+            lineHeight = qMax(lineHeight, itemSize.height());
+        }
+
+        if (items_.isEmpty()) {
+            return margins.top() + margins.bottom();
+        }
+        return y + lineHeight - rect.y() + margins.bottom();
+    }
+
+    QList<QLayoutItem*> items_;
+    int spacing_ = 0;
+};
+
+} // namespace
 
 CommandButtonBar::CommandButtonBar(QWidget *parent)
     : QToolBar(parent) {
@@ -49,10 +164,9 @@ void CommandButtonBar::setupUI() {
 
     // 按钮容器
     buttonContainer_ = new QWidget(this);
-    buttonLayout_ = new QHBoxLayout(buttonContainer_);
+    buttonContainer_->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    buttonLayout_ = new FlowLayout(buttonContainer_, 4);
     buttonLayout_->setContentsMargins(0, 0, 0, 0);
-    buttonLayout_->setSpacing(4);
-    buttonLayout_->addStretch();
     addWidget(buttonContainer_);
 }
 
@@ -113,18 +227,20 @@ void CommandButtonBar::refreshButtons() {
         connect(pushBtn, &QPushButton::customContextMenuRequested,
                 this, &CommandButtonBar::onButtonContextMenu);
 
-        // 插入到stretch之前
-        buttonLayout_->insertWidget(buttonLayout_->count() - 1, pushBtn);
+        buttonLayout_->addWidget(pushBtn);
         buttons_[btn.id] = pushBtn;
     }
+    QTimer::singleShot(0, this, &CommandButtonBar::updateButtonBarHeight);
 }
 
 void CommandButtonBar::clearButtons() {
-    for (auto *btn : buttons_) {
-        buttonLayout_->removeWidget(btn);
-        delete btn;
+    QLayoutItem *item = nullptr;
+    while ((item = buttonLayout_->takeAt(0)) != nullptr) {
+        delete item->widget();
+        delete item;
     }
     buttons_.clear();
+    QTimer::singleShot(0, this, &CommandButtonBar::updateButtonBarHeight);
 }
 
 void CommandButtonBar::onGroupChanged(int index) {
@@ -228,6 +344,32 @@ void CommandButtonBar::contextMenuEvent(QContextMenuEvent *event) {
     QAction *addAction = menu.addAction(tr("添加命令按钮"));
     connect(addAction, &QAction::triggered, this, &CommandButtonBar::onAddButton);
     menu.exec(event->globalPos());
+}
+
+void CommandButtonBar::resizeEvent(QResizeEvent *event) {
+    QToolBar::resizeEvent(event);
+    updateButtonBarHeight();
+}
+
+void CommandButtonBar::updateButtonBarHeight() {
+    const int containerWidth = buttonContainer_->width();
+    if (containerWidth <= 0) {
+        return;
+    }
+
+    const int containerHeight = buttonLayout_->heightForWidth(containerWidth);
+    if (buttonContainer_->minimumHeight() != containerHeight
+        || buttonContainer_->maximumHeight() != containerHeight) {
+        buttonContainer_->setMinimumHeight(containerHeight);
+        buttonContainer_->setMaximumHeight(containerHeight);
+        buttonContainer_->updateGeometry();
+    }
+
+    const int toolbarHeight = sizeHint().height();
+    if (minimumHeight() != toolbarHeight || maximumHeight() != toolbarHeight) {
+        setFixedHeight(toolbarHeight);
+        updateGeometry();
+    }
 }
 
 void CommandButtonBar::onAddButton() {

@@ -6,7 +6,7 @@
 #include <QMap>
 
 class QPushButton;
-class QHBoxLayout;
+class QLayout;
 class QWidget;
 
 class CommandButtonBar : public QToolBar {
@@ -29,14 +29,16 @@ private slots:
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override;
+    void resizeEvent(QResizeEvent *event) override;
 
 private:
     void setupUI();
     void clearButtons();
+    void updateButtonBarHeight();
 
     QComboBox *groupComboBox_ = nullptr;
     QWidget *buttonContainer_ = nullptr;
-    QHBoxLayout *buttonLayout_ = nullptr;
+    QLayout *buttonLayout_ = nullptr;
     QMap<QString, QPushButton*> buttons_;  // buttonId -> QPushButton
 };
 
