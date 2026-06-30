@@ -7,6 +7,14 @@
 SessionTabWidget::SessionTabWidget(QWidget *parent)
     : QTabWidget(parent) {
 
+#ifdef Q_OS_MACOS
+    auto *macTabStyle = new LeftAlignedTabStyle();
+    macTabStyle->setParent(this);
+    setStyle(macTabStyle);
+    tabBar()->setStyle(macTabStyle);
+    tabBar()->setExpanding(false);
+#endif
+
     // 为 tab bar 启用右键菜单
     tabBar()->setContextMenuPolicy(Qt::CustomContextMenu);
 
