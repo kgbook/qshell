@@ -2,30 +2,32 @@
 #define QSHELL_SESSIONTABWIDGET_H
 
 #include <QTabWidget>
+#include <QTabBar>
 #include <QProxyStyle>
+#include <QStyleFactory>
+#include <QStyleOptionTab>
 
 #ifdef Q_OS_MACOS
 class LeftAlignedTabStyle : public QProxyStyle {
 public:
-    using QProxyStyle::QProxyStyle;
-    
+    LeftAlignedTabStyle() : QProxyStyle(QStyleFactory::create("Fusion")) {}
+
     int styleHint(StyleHint hint, const QStyleOption *option,
                   const QWidget *widget, QStyleHintReturn *returnData) const override {
-        if (hint == QStyle::SH_TabBar_Alignment) {
+        if (hint == QStyle::SH_TabBar_Alignment)
             return Qt::AlignLeft;
-        }
+        if (hint == QStyle::SH_TabBar_PreferNoArrows)
+            return 0;
+        if (hint == QStyle::SH_TabBar_ElideMode)
+            return Qt::ElideNone;
         return QProxyStyle::styleHint(hint, option, widget, returnData);
     }
-    
+
     QRect subElementRect(SubElement element, const QStyleOption *option,
                          const QWidget *widget) const override {
         if (element == SE_TabWidgetTabBar) {
             QRect rect = QProxyStyle::subElementRect(element, option, widget);
-            // 强制 tab bar 左对齐（x=0）并占满整个宽度
             rect.moveLeft(0);
-            if (widget) {
-                rect.setWidth(widget->width());
-            }
             return rect;
         }
         return QProxyStyle::subElementRect(element, option, widget);
@@ -39,6 +41,10 @@ class SessionTabWidget : public QTabWidget {
 public:
     explicit SessionTabWidget(QWidget *parent = nullptr);
     ~SessionTabWidget() override = default;
+
+protected:
+    void tabInserted(int index) override;
+    void tabRemoved(int index) override;
 
 private slots:
     void showTabContextMenu(const QPoint &pos);
